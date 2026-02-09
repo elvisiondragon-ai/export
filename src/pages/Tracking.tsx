@@ -2,6 +2,7 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Search, Package, MapPin, Clock, CheckCircle2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const trackingUpdates = [
   {
@@ -133,7 +134,16 @@ const trackingUpdates = [
 
 const Tracking = () => {
   const { t } = useLocale();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleMemberOnly = () => {
+    toast({
+      title: "Sorry This access for Member Only",
+      description: "Please login or contact administrator to access this feature.",
+      variant: "destructive",
+    });
+  };
 
   const filteredShipments = trackingUpdates.filter(s => 
     s.shipmentId.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -160,9 +170,12 @@ const Tracking = () => {
               placeholder={t("Enter container or shipment ID...", "Masukkan ID kontainer atau pengiriman...")}
               className="flex-1 rounded-lg border border-border bg-secondary px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
-            <div className="gradient-gold rounded-lg px-5 py-3 text-primary-foreground flex items-center justify-center">
+            <button 
+              onClick={handleMemberOnly}
+              className="gradient-gold rounded-lg px-5 py-3 text-primary-foreground flex items-center justify-center hover:opacity-90 transition-all"
+            >
               <Search className="h-5 w-5" />
-            </div>
+            </button>
           </div>
         </div>
 

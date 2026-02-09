@@ -3,9 +3,19 @@ import { motion } from "framer-motion";
 import { TrendingUp, Package, Globe, Users, ArrowUpRight, ArrowDownRight, FileText, Download } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Revenue = () => {
   const { t, formatPrice } = useLocale();
+  const { toast } = useToast();
+
+  const handleMemberOnly = () => {
+    toast({
+      title: "Sorry This access for Member Only",
+      description: "Please login or contact administrator to access this feature.",
+      variant: "destructive",
+    });
+  };
 
   const totalRevenue = 523000;
 
@@ -126,7 +136,10 @@ const Revenue = () => {
               {t("From 1 January 2026", "Dari 1 Januari 2026")}
             </p>
           </div>
-          <Button className="gradient-gold text-primary-foreground font-bold hover:opacity-90 transition-all">
+          <Button 
+            onClick={handleMemberOnly}
+            className="gradient-gold text-primary-foreground font-bold hover:opacity-90 transition-all"
+          >
             <Download className="mr-2 h-4 w-4" />
             {t("Download Report", "Unduh Laporan")}
           </Button>

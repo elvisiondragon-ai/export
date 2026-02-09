@@ -1,9 +1,9 @@
 import { useLocale } from "@/contexts/LocaleContext";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const CTASection = () => {
   const { t } = useLocale();
-  const phone = "62895325633487";
 
   return (
     <section className="relative py-24 border-t border-border">
@@ -24,22 +24,18 @@ const CTASection = () => {
             )}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <a
-              href={`https://wa.me/${phone}?text=${encodeURIComponent("Hi Renata, I would like to Join Export Global as Seller")}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/survey?role=seller"
               className="gradient-gold rounded-lg px-8 py-3 font-semibold text-primary-foreground transition-all hover:opacity-90"
             >
               {t("I Want to Sell", "Saya Ingin Menjual")}
-            </a>
-            <a
-              href={`https://wa.me/${phone}?text=${encodeURIComponent("Hi Renata, I would like to Join Export Global as Buyer")}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            </Link>
+            <Link
+              to="/survey?role=buyer"
               className="rounded-lg border border-primary px-8 py-3 font-semibold text-primary transition-all hover:bg-primary/10"
             >
               {t("I Want to Buy", "Saya Ingin Membeli")}
-            </a>
+            </Link>
           </div>
         </motion.div>
       </div>

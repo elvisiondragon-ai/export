@@ -2,6 +2,7 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { motion } from "framer-motion";
 import { FileText, Package, Ship, MapPin, Eye, Download, Plus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const shipments = [
   {
@@ -92,6 +93,15 @@ const documents = [
 
 const Shipment = () => {
   const { t, formatPrice } = useLocale();
+  const { toast } = useToast();
+
+  const handleMemberOnly = () => {
+    toast({
+      title: "Sorry This access for Member Only",
+      description: "Please login or contact administrator to access this feature.",
+      variant: "destructive",
+    });
+  };
 
   return (
     <div className="min-h-screen pt-20">
@@ -111,7 +121,10 @@ const Shipment = () => {
             <h2 className="font-display text-2xl font-bold text-foreground">
               {t("Active Shipments", "Pengiriman Aktif")}
             </h2>
-            <Button className="gradient-gold text-primary-foreground font-bold hover:opacity-90 transition-all">
+            <Button 
+              onClick={handleMemberOnly}
+              className="gradient-gold text-primary-foreground font-bold hover:opacity-90 transition-all"
+            >
               <Plus className="mr-2 h-4 w-4" />
               {t("New Shipment", "Pengiriman Baru")}
             </Button>
@@ -165,10 +178,20 @@ const Shipment = () => {
                   </div>
 
                   <div className="flex lg:flex-col gap-2">
-                    <Button variant="outline" size="sm" className="flex-1 lg:flex-none gold-border hover:bg-primary/5">
+                    <Button 
+                      onClick={handleMemberOnly}
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 lg:flex-none gold-border hover:bg-primary/5"
+                    >
                       {t("View Details", "Lihat Detail")}
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1 lg:flex-none gold-border hover:bg-primary/5">
+                    <Button 
+                      onClick={handleMemberOnly}
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 lg:flex-none gold-border hover:bg-primary/5"
+                    >
                       {t("Track", "Lacak")}
                     </Button>
                   </div>
@@ -184,7 +207,10 @@ const Shipment = () => {
             <h2 className="font-display text-2xl font-bold text-foreground">
               {t("Shipment Documents", "Dokumen Pengiriman")}
             </h2>
-            <Button className="gradient-gold text-primary-foreground font-bold hover:opacity-90 transition-all">
+            <Button 
+              onClick={handleMemberOnly}
+              className="gradient-gold text-primary-foreground font-bold hover:opacity-90 transition-all"
+            >
               <Upload className="mr-2 h-4 w-4" />
               {t("Upload Document", "Unggah Dokumen")}
             </Button>
@@ -221,11 +247,21 @@ const Shipment = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="gap-2 gold-border hover:bg-primary/5">
+                    <Button 
+                      onClick={handleMemberOnly}
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-2 gold-border hover:bg-primary/5"
+                    >
                       <Eye className="h-4 w-4" />
                       {t("View", "Lihat")}
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-2 gold-border hover:bg-primary/5">
+                    <Button 
+                      onClick={handleMemberOnly}
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-2 gold-border hover:bg-primary/5"
+                    >
                       <Download className="h-4 w-4" />
                       {t("Download", "Unduh")}
                     </Button>

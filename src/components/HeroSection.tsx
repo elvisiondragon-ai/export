@@ -1,6 +1,7 @@
 import { useLocale } from "@/contexts/LocaleContext";
 import { motion } from "framer-motion";
 import { Zap, DollarSign, Award } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   const { t } = useLocale();
@@ -48,22 +49,18 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="mt-10 flex flex-wrap justify-center gap-4"
         >
-          <a
-            href={`https://wa.me/62895325633487?text=${encodeURIComponent("Hi Renata, I would like to Join Export Global as Seller")}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/survey?role=seller"
             className="gradient-gold rounded-lg px-8 py-3 font-semibold text-primary-foreground transition-all hover:opacity-90 hover:shadow-[0_0_30px_hsl(43_72%_52%/0.3)]"
           >
             {t("Join as Seller", "Gabung sebagai Penjual")}
-          </a>
-          <a
-            href={`https://wa.me/62895325633487?text=${encodeURIComponent("Hi Renata, I would like to Join Export Global as Buyer")}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          </Link>
+          <Link
+            to="/survey?role=buyer"
             className="rounded-lg border border-primary px-8 py-3 font-semibold text-primary transition-all hover:bg-primary/10"
           >
             {t("Join as Buyer", "Gabung sebagai Pembeli")}
-          </a>
+          </Link>
         </motion.div>
 
         <motion.div
