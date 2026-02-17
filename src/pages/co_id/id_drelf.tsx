@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select';
 import drelfImage from '@/assets/drelf.png';
 import qrisBcaImage from '@/assets/qrisbca.jpeg';
-import { ArrowLeft, Copy, CreditCard, User, Mail, Phone, Home, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Copy, CreditCard, User, Mail, Phone, Home, Plus, Minus, Sparkles, BookOpen, Music, Zap } from 'lucide-react';
 import { FaWhatsapp } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,8 +72,8 @@ export default function DrelfPaymentPageID() {
   const [searchParams] = useSearchParams();
   const affiliateRef = searchParams.get('id');
   const { toast } = useToast();
+  const PIXEL_ID = '1749197952320359';
 
-  const productId = 'drelf_collagen_1x_600k';
   const productName = 'Drelf Collagen';
   const price = 600000;
 
@@ -95,6 +95,50 @@ export default function DrelfPaymentPageID() {
   const [loading, setLoading] = useState(false);
   const [paymentData, setPaymentData] = useState<any>(null);
   const [showPaymentInstructions, setShowPaymentInstructions] = useState(false);
+
+  // --- CAPI Helper ---
+  const sendCapiEvent = async (eventName: string, eventData: any, eventId?: string) => {    
+    try {
+      const { fbc, fbp } = getFbcFbpCookies();
+      const userData: any = {
+        client_user_agent: navigator.userAgent,
+        fbc,
+        fbp
+      };
+
+      if (userEmail) userData.em = userEmail;
+      if (userName) {
+          const nameParts = userName.trim().split(/\s+/);
+          userData.fn = nameParts[0];
+          if (nameParts.length > 1) userData.ln = nameParts.slice(1).join(' ');
+      }
+      if (phoneNumber) userData.ph = phoneNumber;
+      if (affiliateRef) userData.external_id = affiliateRef;
+
+      await supabase.functions.invoke('capi-universal', {
+        body: {
+          pixelId: PIXEL_ID,
+          eventName,
+          customData: eventData,
+          eventId: eventId,
+          eventSourceUrl: window.location.href,
+          userData
+        }
+      });
+    } catch (err) {
+      console.error('CAPI Error:', err);
+    }
+  };
+
+  useEffect(() => {
+    // Track AddToCart on Page Load (CAPI Only)
+    const eventId = `addtocart-${Date.now()}`;
+    sendCapiEvent('AddToCart', {
+      content_name: 'Drelf Collagen ID',
+      value: price,
+      currency: 'IDR'
+    }, eventId);
+  }, []);
 
   const handleIncrement = () => setQuantity(prev => prev + 1);
   const handleDecrement = () => setQuantity(prev => Math.max(isPromoApplied ? 3 : 1, prev - 1));
@@ -148,8 +192,17 @@ export default function DrelfPaymentPageID() {
       return;
     }
 
-    const fullAddress = `${userAddress}, ${kecamatan}, ${kota}, ${selectedProvince}, ${kodePos}`;
     setLoading(true);
+    
+    // Track AddPaymentInfo (CAPI Only)
+    const apiEventId = `addpaymentinfo-${Date.now()}`;
+    sendCapiEvent('AddPaymentInfo', {
+      content_name: productName,
+      value: totalAmount,
+      currency: 'IDR'
+    }, apiEventId);
+
+    const fullAddress = `${userAddress}, ${kecamatan}, ${kota}, ${selectedProvince}, ${kodePos}`;
     const { fbc, fbp } = getFbcFbpCookies();
     const clientIp = await getClientIp();
 
@@ -332,7 +385,7 @@ export default function DrelfPaymentPageID() {
       <div className="px-6 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>1. Rangkuman Pesanan</CardTitle>
+            <CardTitle>Rangkuman Pesanan</CardTitle>
             </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
@@ -396,8 +449,42 @@ export default function DrelfPaymentPageID() {
                   <span className={`font-bold text-xl text-primary`}>{formatCurrency(totalAmount)}</span>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="mt-4 bg-amber-50 p-4 rounded-xl border border-amber-100 space-y-2">
+        {/* WHAT YOU GET SECTION - OUTSIDE OF CARD */}
+        <div className="bg-slate-900 p-6 md:p-8 rounded-3xl space-y-6 shadow-2xl border border-slate-800">
+          <h4 className="font-black text-white text-lg flex items-center gap-3 uppercase tracking-tight">
+            <Sparkles className="h-5 w-5 text-primary" /> Apa yang Anda Dapatkan:
+          </h4>
+          <ul className="space-y-4">
+            <li className="flex items-start gap-4">
+              <div className="mt-1 bg-primary/20 p-1.5 rounded-full"><Zap className="h-4 w-4 text-primary" /></div>
+              <p className="text-base text-slate-200 font-medium leading-relaxed"><b className="text-white">10 Sachet Drelf Premium Collagen</b> (Konsumsi max 1x sehari untuk hasil optimal).</p>
+            </li>
+            <li className="flex items-start gap-4">
+              <div className="mt-1 bg-primary/20 p-1.5 rounded-full"><BookOpen className="h-4 w-4 text-primary" /></div>
+              <p className="text-base text-slate-200 font-medium leading-relaxed"><b className="text-white">Exclusive Beauty Booklet Guidance</b> (Panduan lengkap ritual kecantikan harian).</p>
+            </li>
+            <li className="flex items-start gap-4">
+              <div className="mt-1 bg-primary/20 p-1.5 rounded-full"><Music className="h-4 w-4 text-primary" /></div>
+              <p className="text-base text-slate-200 font-medium leading-relaxed"><b className="text-white">Beauty Hypnosis Audio Ritual</b> (Digital Access yang dikirimkan saat barang sampai).</p>
+            </li>
+          </ul>
+          
+          <div className="pt-6 space-y-2 border-t border-slate-800">
+            <p className="text-sm font-black text-primary flex items-center gap-2 uppercase tracking-tighter">
+              <Zap className="h-4 w-4" /> High Technology Synchronization
+            </p>
+            <p className="text-xs leading-relaxed text-slate-400 font-medium italic">
+              "Minum Drelf sambil mendengarkan audio hypnosis pendek akan membantu tubuh masuk ke fase deep relaxation. Dalam kondisi ini, nutrisi kolagen terserap sempurna ke seluruh sel tubuh secara lebih cepat dan efektif."
+            </p>
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 space-y-2">
               <p className="text-amber-900 text-[10px] font-bold">
                 🛡️ BPOM RI 271282014100002 (HSA equivalent) by PT. SKA
               </p>
@@ -409,7 +496,7 @@ export default function DrelfPaymentPageID() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>2. Informasi Pengiriman</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Informasi Pengiriman</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="userName"><User className="inline-block w-4 h-4 mr-2"/>Nama Lengkap</Label>
@@ -439,7 +526,7 @@ export default function DrelfPaymentPageID() {
         </Card>
 
         <Card>
-            <CardHeader><CardTitle>3. Metode Pembayaran</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Metode Pembayaran</CardTitle></CardHeader>
             <CardContent>
             <RadioGroup value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod} className="space-y-3">
                 {paymentMethods.map((method) => (
@@ -469,9 +556,9 @@ export default function DrelfPaymentPageID() {
           <Button 
             onClick={handleCreatePayment} 
             disabled={loading} 
-            className="w-full h-14 text-xl font-bold shadow-xl transition-all active:scale-95 bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-amber-900 border-none hover:opacity-90"
+            className="w-full h-14 text-xl font-bold shadow-xl transition-all active:scale-95 bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-amber-950 border-none hover:opacity-90"
           >
-            {loading ? <div className="w-6 h-6 border-4 border-amber-900/30 border-t-amber-900 rounded-full animate-spin mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
+            {loading ? <div className="w-6 h-6 border-4 border-amber-950/30 border-t-amber-950 rounded-full animate-spin mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
             {loading ? 'Memproses...' : `Bayar Sekarang (${formatCurrency(totalAmount)})`}
           </Button>
         </div>

@@ -6,7 +6,8 @@ interface WhatsAppButtonProps {
 
 export const WhatsAppButton = ({ message }: WhatsAppButtonProps) => {
   const phoneNumber = '62895325633487';
-  const defaultMessage = 'Hi Renata I would Like to ask question about product (fill this data)';
+  const currentPage = window.location.pathname.split('/').pop() || 'Product';
+  const defaultMessage = `Hi Renata, I want to ask about this product: ${currentPage}`;
   const finalMessage = encodeURIComponent(message || defaultMessage);
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${finalMessage}`;
 
