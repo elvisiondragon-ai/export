@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+// ─── FB PIXEL ────────────────────────────────────────────
+import { initFacebookPixelWithLogging, trackViewContentEvent, trackAddToCartEvent } from "@/utils/fbpixel";
+
 // ─── IMAGES ──────────────────────────────────────────────
 import heroMain from "@/assets/placeholder_package/hero_section_1_a_premium_rigid_p_13_11zon.jpg";
 import heroInset from "@/assets/placeholder_package/hero_section_1_a_premium_rigid_p_1_12_11zon.jpg";
@@ -149,9 +152,6 @@ function Placeholder({
         <video 
           src={videoSrc} 
           controls 
-          autoPlay 
-          muted 
-          loop 
           playsInline
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} 
         />
@@ -462,7 +462,7 @@ const globalStyle = `
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; overflow-x: hidden; width: 100vw; }
 
   body {
     background: var(--dark);
@@ -470,6 +470,8 @@ const globalStyle = `
     font-family: 'DM Sans', sans-serif;
     font-weight: 300;
     overflow-x: hidden;
+    width: 100vw;
+    position: relative;
   }
 
   body::before {
@@ -477,6 +479,20 @@ const globalStyle = `
     position: fixed; inset: 0; z-index: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
     pointer-events: none; opacity: 0.35;
+  }
+
+  /* Prevent side scroll on mobile */
+  @media (max-width: 768px) {
+    .mobile-px { padding-left: 1rem !important; padding-right: 1rem !important; }
+    .mobile-gap { gap: 2rem !important; }
+    .mobile-stack { display: flex !important; flex-direction: column !important; grid-template-columns: 1fr !important; }
+    .mobile-w-95 { width: 95% !important; max-width: 95% !important; margin-left: auto !important; margin-right: auto !important; }
+    .mobile-center { text-align: center !important; align-items: center !important; justify-content: center !important; }
+    .mobile-hide { display: none !important; }
+    .mobile-table-scroll { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    
+    h1, h2, h3, p, div { max-width: 100% !important; overflow-wrap: break-word; }
+    section { padding-left: 1rem !important; padding-right: 1rem !important; width: 100vw !important; overflow: hidden; }
   }
 `;
 
@@ -522,6 +538,7 @@ const S = {
     cursor: "pointer",
     border: "none",
     transition: "all 0.25s",
+    textAlign: "center" as const,
   } as React.CSSProperties,
 
   btnGhost: {
@@ -535,6 +552,7 @@ const S = {
     background: "transparent",
     cursor: "pointer",
     transition: "all 0.25s",
+    textAlign: "center" as const,
   } as React.CSSProperties,
 };
 
@@ -549,8 +567,27 @@ export default function PremiumExportLanding() {
     days: ""
   });
 
+  const PIXEL_ID = "1449012769558475";
+
+  useEffect(() => {
+    initFacebookPixelWithLogging(PIXEL_ID);
+    trackViewContentEvent(
+      { content_name: "PremiumBox Export Landing", content_category: "Landing Page" },
+      undefined,
+      PIXEL_ID
+    );
+  }, []);
+
   const handleWhatsAppRedirect = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Fire AddToCart Pixel Event
+    trackAddToCartEvent(
+      { content_name: "Ask The Sales (WhatsApp)", value: 199, currency: "USD" },
+      undefined,
+      PIXEL_ID
+    );
+
     const message = `Hello, I'm interested in PremiumBox Export.\n\n` +
       `1. How many pcs you plan to order? ${surveyData.quantity}\n` +
       `2. What country you are in? ${surveyData.country}\n` +
@@ -632,40 +669,46 @@ export default function PremiumExportLanding() {
       </Dialog>
 
       {/* ── NAV ── */}
-      <nav style={{
-        position: "fixed", top: 0, width: "100%", zIndex: 100,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "1.4rem 4rem",
-        background: "linear-gradient(to bottom, rgba(10,10,8,0.95), transparent)",
-        backdropFilter: "blur(2px)",
-      }}>
+      <nav 
+        className="mobile-px"
+        style={{
+          position: "fixed", top: 0, width: "100%", zIndex: 100,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "1.4rem 4rem",
+          background: "linear-gradient(to bottom, rgba(10,10,8,0.95), transparent)",
+          backdropFilter: "blur(2px)",
+        }}
+      >
         <div style={{ ...S.mono, fontSize: "0.85rem", letterSpacing: "0.25em", ...S.gold, textTransform: "uppercase" }}>
           PremiumBox · Export
         </div>
-        <button onClick={() => setShowSurvey(true)} style={S.btnPrimary}>Ask The Sales</button>
+        <button onClick={() => setShowSurvey(true)} style={S.btnPrimary} className="px-4 py-2 text-xs">Ask The Sales</button>
       </nav>
 
       {/* ── HERO ── */}
-      <section style={{
-        position: "relative", zIndex: 1, minHeight: "100vh",
-        display: "grid", gridTemplateColumns: "1fr 1fr",
-        alignItems: "center", padding: "8rem 4rem 4rem", gap: "4rem",
-        overflow: "hidden",
-      }}>
+      <section 
+        className="mobile-px mobile-stack mobile-gap"
+        style={{
+          position: "relative", zIndex: 1, minHeight: "100vh",
+          display: "grid", gridTemplateColumns: "1fr 1fr",
+          alignItems: "center", padding: "8rem 4rem 4rem", gap: "4rem",
+          overflow: "hidden",
+        }}
+      >
         {/* Content */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <p style={{ ...S.mono, fontSize: "0.72rem", letterSpacing: "0.3em", ...S.gold, textTransform: "uppercase", marginBottom: "2rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-            <span style={{ display: "block", width: "3rem", height: 1, background: "#C9A84C" }} />
+        <div style={{ display: "flex", flexDirection: "column" }} className="mobile-w-95 mobile-center">
+          <p className="mobile-center" style={{ ...S.mono, fontSize: "0.72rem", letterSpacing: "0.3em", ...S.gold, textTransform: "uppercase", marginBottom: "2rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+            <span className="mobile-hide" style={{ display: "block", width: "3rem", height: 1, background: "#C9A84C" }} />
             Boutique Quality, Industrial Speed
           </p>
-          <h1 style={{ ...S.playfair, fontSize: "clamp(2.8rem,4.5vw,5rem)", fontWeight: 900, lineHeight: 1.05, marginBottom: "2rem" }}>
+          <h1 className="mobile-center" style={{ ...S.playfair, fontSize: "clamp(2.8rem,4.5vw,5rem)", fontWeight: 900, lineHeight: 1.05, marginBottom: "2rem" }}>
             Get Your Premium Brand Prototype.<br />
             <em style={S.gold}>50 Luxury Boxes</em>, Delivered to Your Door for $199.
           </h1>
-          <p style={{ fontSize: "1.05rem", lineHeight: 1.75, color: "#BBAA88", maxWidth: 500, marginBottom: "3rem" }}>
+          <p className="mobile-center" style={{ fontSize: "1.05rem", lineHeight: 1.75, color: "#BBAA88", maxWidth: 500, marginBottom: "3rem" }}>
             Delivered to your door. ISO Standard Material. 100% Export-Ready or Money Back. Don't let a flimsy box cost you the deal.
           </p>
-          <div style={{ display: "flex", gap: "1.2rem", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "1.2rem", flexWrap: "wrap" }} className="mobile-center">
             <button onClick={() => setShowSurvey(true)} style={S.btnPrimary}>Ask The Sales</button>
             <a href="#compare" style={S.btnGhost}>See the Difference</a>
           </div>
@@ -675,7 +718,7 @@ export default function PremiumExportLanding() {
         </div>
 
         {/* Hero Visuals */}
-        <div style={{ position: "relative", height: "75vh" }}>
+        <div style={{ position: "relative", height: "75vh" }} className="mobile-w-95">
           {/* ── REPLACE: src="./images/hero-main.jpg" ── */}
           <Placeholder
             type="photo" label="FOTO HERO UTAMA"
@@ -698,7 +741,10 @@ export default function PremiumExportLanding() {
       </section>
 
       {/* ── PHOTO STRIP ── */}
-      <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "repeat(4,1fr)" }}>
+      <div 
+        className="mobile-stack"
+        style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: "repeat(4,1fr)" }}
+      >
         {[
           { label: "STRIP FOTO 1", title: "Pelabuhan / Kargo", brief: "Tangan memegang box di depan kontainer. Nuansa export global.", src: strip1 },
           { label: "STRIP FOTO 2", title: "Momen Unboxing", brief: "Tangan bisnis membuka box perlahan. Ekspresi impress, candid.", src: strip2 },
@@ -711,7 +757,10 @@ export default function PremiumExportLanding() {
       </div>
 
       {/* ── PROOF STRIP ── */}
-      <div style={{ position: "relative", zIndex: 1, background: "#C9A84C", padding: "1.4rem 4rem", display: "flex", gap: "4rem", alignItems: "center", flexWrap: "wrap" }}>
+      <div 
+        className="mobile-px mobile-gap"
+        style={{ position: "relative", zIndex: 1, background: "#C9A84C", padding: "1.4rem 4rem", display: "flex", gap: "4rem", alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}
+      >
         {[["50+", "Countries Shipped"], ["2,400+", "Brands Served"], ["MOQ 50", "Pcs — No Minimum Trap"], ["14", "Days Production"]].map(([num, label], i) => (
           <div key={i} style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
             <span style={{ ...S.playfair, fontSize: "2rem", fontWeight: 900, color: "#0A0A08", lineHeight: 1 }}>{num}</span>
@@ -721,15 +770,22 @@ export default function PremiumExportLanding() {
       </div>
 
       {/* ── PAIN SECTION ── */}
-      <section id="pain" style={{ position: "relative", zIndex: 1, background: "#0D0D0A", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "7rem 4rem" }}>
+      <section 
+        id="pain" 
+        className="mobile-px"
+        style={{ position: "relative", zIndex: 1, background: "#0D0D0A", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "7rem 4rem" }}
+      >
         <Reveal><p style={S.sectionLabel}>The Real Problem</p></Reveal>
         <Reveal delay={80}><h2 style={S.h2}>Why Are Global Buyers<br />Ghosting You?</h2></Reveal>
         <Reveal delay={160}><p style={{ ...S.dim, maxWidth: 560, lineHeight: 1.8, marginBottom: "4rem", fontSize: "1.05rem" }}>It's not your product quality. It might be your packaging. Here's what cheap boxes are silently costing you.</p></Reveal>
 
         <Reveal>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: "1.5px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div 
+            className="mobile-stack"
+            style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: "1.5px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)" }}
+          >
             {PAINS.map((card) => (
-              <div key={card.heading} style={{ background: "#141410", position: "relative", overflow: "hidden" }}>
+              <div key={card.heading} style={{ background: "#141410", position: "relative", overflow: "hidden" }} className="mobile-w-95">
                 {/* ── REPLACE: <img src={`./images/${card.photoLabel.toLowerCase().replace(/ /g,'-')}.jpg`} /> ── */}
                 <Placeholder type="photo" label={card.photoLabel} title={card.photoTitle} brief={card.photoBrief} tags={card.photoTags}
                   style={{ width: "100%" } as React.CSSProperties} src={card.image} />
@@ -745,9 +801,16 @@ export default function PremiumExportLanding() {
       </section>
 
       {/* ── SOLUTION SECTION ── */}
-      <section id="solution" style={{ position: "relative", zIndex: 1, padding: "8rem 4rem" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6rem", alignItems: "start" }}>
-          <div style={{ position: "sticky", top: "7rem" }}>
+      <section 
+        id="solution" 
+        className="mobile-px"
+        style={{ position: "relative", zIndex: 1, padding: "8rem 4rem" }}
+      >
+        <div 
+          className="mobile-stack mobile-gap"
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6rem", alignItems: "start" }}
+        >
+          <div style={{ position: "sticky", top: "7rem" }} className="mobile-w-95">
             <Reveal><p style={S.sectionLabel}>Our Solution</p></Reveal>
             <Reveal delay={80}>
               <h2 style={{ ...S.playfair, fontSize: "clamp(2rem,3.5vw,3.2rem)", fontWeight: 700, lineHeight: 1.15, marginBottom: "1.5rem" }}>
@@ -789,9 +852,15 @@ export default function PremiumExportLanding() {
       </section>
 
       {/* ── VIDEO SECTION ── */}
-      <section style={{ position: "relative", zIndex: 1, background: "#0D0D0A", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "7rem 4rem" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5rem", alignItems: "center" }}>
-          <div>
+      <section 
+        className="mobile-px"
+        style={{ position: "relative", zIndex: 1, background: "#0D0D0A", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "7rem 4rem" }}
+      >
+        <div 
+          className="mobile-stack mobile-gap"
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5rem", alignItems: "center" }}
+        >
+          <div className="mobile-w-95">
             {/* ── REPLACE: <video src="./videos/brand-film.mp4" /> ── */}
             <Placeholder type="video" label="VIDEO UTAMA — BRAND FILM" title="From Raw Material to Global Deal"
               brief="60–90 detik. Board kosong → desain → foil → cutting → box jadi → dikirim → buyer puas. No voiceover. Musik: cinematic ambient orchestral."
@@ -813,18 +882,25 @@ export default function PremiumExportLanding() {
       </section>
 
       {/* ── COMPARE ── */}
-      <section id="compare" style={{ position: "relative", zIndex: 1, background: "#0D0D0A", padding: "8rem 4rem" }}>
+      <section 
+        id="compare" 
+        className="mobile-px"
+        style={{ position: "relative", zIndex: 1, background: "#0D0D0A", padding: "8rem 4rem" }}
+      >
         <Reveal><p style={S.sectionLabel}>Side by Side</p></Reveal>
         <Reveal delay={80}><h2 style={S.h2}>Standard Box vs.<br />Premium Export Package</h2></Reveal>
 
         {/* Before / After */}
         <Reveal delay={160}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", margin: "3rem 0 5rem" }}>
+          <div 
+            className="mobile-stack mobile-gap"
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", margin: "3rem 0 5rem" }}
+          >
             {[
               { bad: true, label: "✗ Cheap Generic Box", ph: "BEFORE FOTO", title: "Generic Brown Kraft Box, No Branding", brief: "Box kraft coklat polos, tanpa logo, penyok. Pencahayaan flat dan cold. Shot dari angle SAMA dengan foto After.", tags: ["Cold light", "Flat angle", "No branding", "Slightly dented"], src: compareBefore },
               { bad: false, label: "✦ Premium Export Package", ph: "AFTER FOTO ⭐", title: "Premium Branded Box — Same Product, Different World", brief: "Box branded dengan foil gold, soft-touch matte, emboss logo. Pencahayaan warm dramatic. Angle persis sama dengan Before.", tags: ["Warm dramatic light", "Same angle as Before", "Gold foil visible"], src: compareAfter },
             ].map(({ bad, label, ph, title, brief, tags, src }) => (
-              <div key={label}>
+              <div key={label} className="mobile-w-95">
                 <div style={{ fontFamily: "monospace", fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", textAlign: "center", padding: "0.55rem", color: bad ? "#C0392B" : "#C9A84C", background: bad ? "rgba(192,57,43,0.1)" : "rgba(201,168,76,0.1)" }}>{label}</div>
                 <Placeholder type="photo" label={ph} title={title} brief={brief} tags={tags} style={{ width: "100%" } as React.CSSProperties} src={src} />
               </div>
@@ -834,45 +910,54 @@ export default function PremiumExportLanding() {
 
         {/* Table */}
         <Reveal>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                {["Feature", "Generic Cheap Box", "✦ Premium Export Package"].map((h, i) => (
-                  <th key={h} style={{ padding: "1.2rem 2rem", textAlign: "left", fontFamily: "monospace", fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", borderBottom: `1px solid ${i === 2 ? "#C9A84C" : "rgba(255,255,255,0.1)"}`, background: i === 2 ? "rgba(201,168,76,0.1)" : "transparent", color: i === 2 ? "#C9A84C" : "#F8F4EC" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["First Impression at Buyer Desk", "✗ Forgettable", "✓ Stops them cold"],
-                ["Material Quality", "✗ Low-grade kraft / single ply", "✓ FSC board, premium weight"],
-                ["Print Finish", "✗ Flat offset, fades fast", "✓ Soft-touch, foil, spot UV"],
-                ["Export / Import Compliance", "✗ Unknown — risky", "✓ EU, US, ASEAN certified"],
-                ["Transit Durability", "✗ Dents, tears, collapses", "✓ Drop & humidity tested"],
-                ["Brand Storytelling", "✗ None — just a box", "✓ Full custom design & branding"],
-                ["MOQ", "✗ Often 1,000–5,000 pcs", "✓ As low as 50 pcs"],
-                ["Negotiating Power", "✗ Buyers lowball your price", "✓ Commands premium pricing"],
-                ["Repeat Orders", "✗ Low — experience is flat", "✓ High — unboxing creates loyalty"],
-              ].map(([feat, bad, good]) => (
-                <tr key={feat}>
-                  <td style={{ padding: "1rem 2rem", fontSize: "0.88rem", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#888878" }}>{feat}</td>
-                  <td style={{ padding: "1rem 2rem", fontSize: "0.92rem", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#BBAA88" }}><span style={{ color: "#C0392B" }}>✗</span> {bad.replace("✗ ", "")}</td>
-                  <td style={{ padding: "1rem 2rem", fontSize: "0.92rem", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(201,168,76,0.05)", color: "#E8C96A", fontWeight: 500 }}><span style={{ color: "#4CAF50" }}>✓</span> {good.replace("✓ ", "")}</td>
+          <div className="mobile-table-scroll">
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "600px" }}>
+              <thead>
+                <tr>
+                  {["Feature", "Generic Cheap Box", "✦ Premium Export Package"].map((h, i) => (
+                    <th key={h} style={{ padding: "1.2rem 2rem", textAlign: "left", fontFamily: "monospace", fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", borderBottom: `1px solid ${i === 2 ? "#C9A84C" : "rgba(255,255,255,0.1)"}`, background: i === 2 ? "rgba(201,168,76,0.1)" : "transparent", color: i === 2 ? "#C9A84C" : "#F8F4EC" }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {[
+                  ["First Impression at Buyer Desk", "✗ Forgettable", "✓ Stops them cold"],
+                  ["Material Quality", "✗ Low-grade kraft / single ply", "✓ FSC board, premium weight"],
+                  ["Print Finish", "✗ Flat offset, fades fast", "✓ Soft-touch, foil, spot UV"],
+                  ["Export / Import Compliance", "✗ Unknown — risky", "✓ EU, US, ASEAN certified"],
+                  ["Transit Durability", "✗ Dents, tears, collapses", "✓ Drop & humidity tested"],
+                  ["Brand Storytelling", "✗ None — just a box", "✓ Full custom design & branding"],
+                  ["MOQ", "✗ Often 1,000–5,000 pcs", "✓ As low as 50 pcs"],
+                  ["Negotiating Power", "✗ Buyers lowball your price", "✓ Commands premium pricing"],
+                  ["Repeat Orders", "✗ Low — experience is flat", "✓ High — unboxing creates loyalty"],
+                ].map(([feat, bad, good]) => (
+                  <tr key={feat}>
+                    <td style={{ padding: "1rem 2rem", fontSize: "0.88rem", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#888878" }}>{feat}</td>
+                    <td style={{ padding: "1rem 2rem", fontSize: "0.92rem", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#BBAA88" }}><span style={{ color: "#C0392B" }}>✗</span> {bad.replace("✗ ", "")}</td>
+                    <td style={{ padding: "1rem 2rem", fontSize: "0.92rem", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(201,168,76,0.05)", color: "#E8C96A", fontWeight: 500 }}><span style={{ color: "#4CAF50" }}>✓</span> {good.replace("✓ ", "")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Reveal>
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      <section id="testimonials" style={{ position: "relative", zIndex: 1, padding: "8rem 4rem" }}>
+      <section 
+        id="testimonials" 
+        className="mobile-px"
+        style={{ position: "relative", zIndex: 1, padding: "8rem 4rem" }}
+      >
         <Reveal><p style={S.sectionLabel}>What Exporters Say</p></Reveal>
         <Reveal delay={80}><h2 style={S.h2}>Real Results from<br />Real Exporters</h2></Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "2rem", marginTop: "4rem" }}>
+        <div 
+          className="mobile-stack mobile-gap"
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "2rem", marginTop: "4rem" }}
+        >
           {TESTIMONIALS.map((t, i) => (
             <Reveal key={t.name} delay={i * 100}>
-              <div style={{ background: "#1E1E18", border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
+              <div style={{ background: "#1E1E18", border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }} className="mobile-w-95">
                 {/* ── REPLACE: <img src={`./images/${t.initials.toLowerCase()}.jpg`} /> ── */}
                 <Placeholder type="photo" label={t.photoLabel} title={t.photoTitle} brief={t.photoBrief} tags={t.photoTags}
                   style={{ width: "100%", borderBottom: "1px solid rgba(201,168,76,0.12)" } as React.CSSProperties} src={t.image} />
@@ -894,11 +979,17 @@ export default function PremiumExportLanding() {
       </section>
 
       {/* ── GALLERY ── */}
-      <section style={{ position: "relative", zIndex: 1, background: "#0A0A08", padding: "6rem 4rem" }}>
+      <section 
+        className="mobile-px"
+        style={{ position: "relative", zIndex: 1, background: "#0A0A08", padding: "6rem 4rem" }}
+      >
         <Reveal><p style={S.sectionLabel}>Our Work</p></Reveal>
         <Reveal delay={80}><h2 style={S.h2}>Packaging That<br />Commands <em style={S.gold}>Attention.</em></h2></Reveal>
         <Reveal delay={160}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(12,1fr)", gap: "0.7rem", marginTop: "3rem" }}>
+          <div 
+            className="mobile-stack mobile-gap"
+            style={{ display: "grid", gridTemplateColumns: "repeat(12,1fr)", gap: "0.7rem", marginTop: "3rem" }}
+          >
             {[
               { style: { gridColumn: "1 / 6", gridRow: "1" }, label: "GALLERY 1 — HERO SHOT ⭐", title: "Full Product Line Flatlay", brief: "3–5 box dari 1 brand ditata overhead di marmer hitam. Foto terbesar dan paling impactful. Harus yang paling WOW.", tags: ["Overhead flatlay", "Black marble", "Multi-box"], src: gallery1 },
               { style: { gridColumn: "6 / 9", gridRow: "1" }, label: "GALLERY 2", title: "Emboss Texture Detail", brief: "Cahaya grazing dari samping pada permukaan emboss. Tekstur terlihat tiga dimensi dan premium.", tags: ["Grazing light", "Macro", "Emboss"], src: gallery2 },
@@ -908,6 +999,7 @@ export default function PremiumExportLanding() {
               { style: { gridColumn: "6 / 9", gridRow: "2" }, label: "GALLERY 6", title: "Color Variant Fan-Out", brief: "5–6 box warna berbeda dari 1 brand disebar seperti fan. Menunjukkan fleksibilitas desain.", tags: ["Fan layout", "Multiple colors", "Same brand"], src: gallery6 },
             ].map((g) => (
               <Placeholder key={g.label} type="photo" label={g.label} title={g.title} brief={g.brief} tags={g.tags}
+                className="mobile-w-95"
                 style={g.style as React.CSSProperties} src={g.src} />
             ))}
           </div>
@@ -915,13 +1007,20 @@ export default function PremiumExportLanding() {
       </section>
 
       {/* ── PRICING ── */}
-      <section id="pricing" style={{ position: "relative", zIndex: 1, background: "#0D0D0A", padding: "8rem 4rem" }}>
+      <section 
+        id="pricing" 
+        className="mobile-px"
+        style={{ position: "relative", zIndex: 1, background: "#0D0D0A", padding: "8rem 4rem" }}
+      >
         <Reveal><p style={S.sectionLabel}>Packages</p></Reveal>
         <Reveal delay={80}><h2 style={S.h2}>Start Small.<br />Scale Confidently.</h2></Reveal>
         <Reveal delay={160}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", marginTop: "4rem", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden" }}>
+          <div 
+            className="mobile-stack mobile-gap"
+            style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", marginTop: "4rem", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden" }}
+          >
             {PRICING.map((p) => (
-              <div key={p.tier} style={{ padding: "3rem 2.5rem", borderRight: "1px solid rgba(255,255,255,0.08)", position: "relative", background: p.featured ? "linear-gradient(160deg,rgba(201,168,76,0.1) 0%,rgba(201,168,76,0.03) 100%)" : "transparent", ...(p.featured ? { borderLeft: "1px solid rgba(201,168,76,0.3)", borderRight: "1px solid rgba(201,168,76,0.3)", margin: "-1px" } : {}) }}>
+              <div key={p.tier} style={{ padding: "3rem 2.5rem", borderRight: "1px solid rgba(255,255,255,0.08)", position: "relative", background: p.featured ? "linear-gradient(160deg,rgba(201,168,76,0.1) 0%,rgba(201,168,76,0.03) 100%)" : "transparent", ...(p.featured ? { borderLeft: "1px solid rgba(201,168,76,0.3)", borderRight: "1px solid rgba(201,168,76,0.3)", margin: "-1px" } : {}) }} className="mobile-w-95">
                 {p.featured && (
                   <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", background: "#C9A84C", color: "#0A0A08", fontFamily: "monospace", fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", padding: "0.35rem 1.2rem", fontWeight: 500 }}>Most Popular</div>
                 )}
@@ -954,7 +1053,11 @@ export default function PremiumExportLanding() {
       </section>
 
       {/* ── FAQ ── */}
-      <section id="faq" style={{ position: "relative", zIndex: 1, padding: "8rem 4rem", maxWidth: 860, margin: "0 auto" }}>
+      <section 
+        id="faq" 
+        className="mobile-px"
+        style={{ position: "relative", zIndex: 1, padding: "8rem 4rem", maxWidth: 860, margin: "0 auto" }}
+      >
         <Reveal><p style={S.sectionLabel}>FAQ</p></Reveal>
         <Reveal delay={80}><h2 style={{ ...S.h2, marginBottom: "1rem" }}>Questions<br />Answered.</h2></Reveal>
         {FAQS.map((f, i) => (
@@ -974,7 +1077,11 @@ export default function PremiumExportLanding() {
       </section>
 
       {/* ── CTA FINAL ── */}
-      <section id="order" style={{ position: "relative", zIndex: 1, background: "#1E1E18", borderTop: "1px solid rgba(201,168,76,0.15)", padding: "8rem 4rem", textAlign: "center", overflow: "hidden" }}>
+      <section 
+        id="order" 
+        className="mobile-px"
+        style={{ position: "relative", zIndex: 1, background: "#1E1E18", borderTop: "1px solid rgba(201,168,76,0.15)", padding: "8rem 4rem", textAlign: "center", overflow: "hidden" }}
+      >
         {/* ── REPLACE: <img src="./images/cta-bg.jpg" style={{position:'absolute',inset:0,objectFit:'cover',opacity:0.12}} /> ── */}
         <div style={{ position: "absolute", inset: 0 }}>
           <Placeholder type="photo" label="CTA BACKGROUND FOTO" title="Atmospheric Global / Aerial Shot"
@@ -1000,9 +1107,12 @@ export default function PremiumExportLanding() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ position: "relative", zIndex: 1, background: "#0A0A08", borderTop: "1px solid rgba(255,255,255,0.05)", padding: "3rem 4rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1.5rem" }}>
+      <footer 
+        className="mobile-px"
+        style={{ position: "relative", zIndex: 1, background: "#0A0A08", borderTop: "1px solid rgba(255,255,255,0.05)", padding: "3rem 4rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1.5rem" }}
+      >
         <div style={{ ...S.mono, fontSize: "0.75rem", letterSpacing: "0.25em", ...S.gold, textTransform: "uppercase" }}>PremiumBox · Export</div>
-        <p style={{ fontSize: "0.78rem", ...S.dim }}>hello@premiumboxexport.com</p>
+        <p style={{ fontSize: "0.78rem", ...S.dim }}>support@elvisiongroup.com</p>
       </footer>
     </>
   );
