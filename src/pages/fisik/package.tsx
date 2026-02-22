@@ -865,7 +865,7 @@ export default function PremiumExportLanding() {
             <Placeholder type="video" label="VIDEO UTAMA — BRAND FILM" title="From Raw Material to Global Deal"
               brief="60–90 detik. Board kosong → desain → foil → cutting → box jadi → dikirim → buyer puas. No voiceover. Musik: cinematic ambient orchestral."
               tags={["60–90 detik", "No voiceover", "Music driven", "Slow-mo accents"]}
-              style={{ height: 400, width: "100%" } as React.CSSProperties} videoSrc={packagev} />
+              style={{ aspectRatio: "9/16", width: "100%", height: "auto", maxWidth: "450px", margin: "0 auto" } as React.CSSProperties} videoSrc={packagev} />
           </div>
 
           <div>
