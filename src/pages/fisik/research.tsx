@@ -14,7 +14,7 @@ import faqImage from "@/assets/research/konsultasi_team_shot.png";
 import ctaImage from "@/assets/research/cta_founder_shot.png";
 
 export default function Research() {
-  const { lang, setLang } = useLocale();
+  const { lang } = useLocale();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   // Helper for translation

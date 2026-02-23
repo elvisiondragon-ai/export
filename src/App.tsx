@@ -2,9 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { LocaleProvider } from "@/contexts/LocaleContext";
-import React, { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, useLocation, useSearchParams } from "react-router-dom";
+import { LocaleProvider, useLocale } from "@/contexts/LocaleContext";
+import React, { Suspense, lazy, useEffect } from 'react';
 
 // Lightweight Components (Keep these static for instant shell)
 import BottomNav from "@/components/BottomNav";
@@ -13,33 +13,46 @@ import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 
 // Lazy Load Pages (These will load later in background)
-const Index = lazy(() => import("./pages/Index"));
-const Shipment = lazy(() => import("./pages/Shipment"));
-const Tracking = lazy(() => import("./pages/Tracking"));
-const Revenue = lazy(() => import("./pages/Revenue"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const ExportSurvey = lazy(() => import("./pages/ExportSurvey"));
-const AnalyticsDashboard = lazy(() => import("./pages/Analytics"));
+const lazyWithPreload = (factory: () => Promise<{ default: React.ComponentType<any> }>) => {
+  const Component = lazy(factory);
+  (Component as any).preload = factory;
+  return Component;
+};
+
+const Index = lazyWithPreload(() => import("./pages/Index"));
+const Shipment = lazyWithPreload(() => import("./pages/Shipment"));
+const Tracking = lazyWithPreload(() => import("./pages/Tracking"));
+const Revenue = lazyWithPreload(() => import("./pages/Revenue"));
+const NotFound = lazyWithPreload(() => import("./pages/NotFound"));
+const ExportSurvey = lazyWithPreload(() => import("./pages/ExportSurvey"));
+const AnalyticsDashboard = lazyWithPreload(() => import("./pages/Analytics"));
 
 // Payment Pages (Heavy - Lazy Load)
-const DrelfPaymentPage = lazy(() => import("./pages/co_en/drelf"));
-const DrelfLanding = lazy(() => import("./pages/co_en/drelflp"));
-const FitFactorPaymentPage = lazy(() => import("./pages/co_en/fitfactor"));
-const HungryLaterPaymentPage = lazy(() => import("./pages/co_en/hungrylater"));
-const JewelryPaymentPage = lazy(() => import("./pages/co_en/jewelry"));
-const ParfumPaymentPage = lazy(() => import("./pages/co_en/parfum"));
+const DrelfPaymentPage = lazyWithPreload(() => import("./pages/co_en/drelf"));
+const DrelfLanding = lazyWithPreload(() => import("./pages/co_en/drelflp"));
+const FitFactorPaymentPage = lazyWithPreload(() => import("./pages/co_en/fitfactor"));
+const HungryLaterPaymentPage = lazyWithPreload(() => import("./pages/co_en/hungrylater"));
+const JewelryPaymentPage = lazyWithPreload(() => import("./pages/co_en/jewelry"));
+const ParfumPaymentPage = lazyWithPreload(() => import("./pages/co_en/parfum"));
 
 // ID Payment Pages
-const DrelfPaymentPageID = lazy(() => import("./pages/co_id/id_drelf"));
-const FitFactorPaymentPageID = lazy(() => import("./pages/co_id/id_fitfactor"));
-const HungryLaterPaymentPageID = lazy(() => import("./pages/co_id/id_hungrylater"));
-const JewelryPaymentPageID = lazy(() => import("./pages/co_id/id_elroyaljewelry"));
-const ParfumPaymentPageID = lazy(() => import("./pages/co_id/id_elroyaleparfum"));
-const Lumina = lazy(() => import("./pages/fisik/lumina"));
-const Bra = lazy(() => import("./pages/fisik/bra"));
-const PackagePage = lazy(() => import("./pages/fisik/package"));
-const Research = lazy(() => import("./pages/fisik/research"));
-const RamadhanRing = lazy(() => import("./pages/fisik/ramadhanring"));
+const DrelfPaymentPageID = lazyWithPreload(() => import("./pages/co_id/id_drelf"));
+const FitFactorPaymentPageID = lazyWithPreload(() => import("./pages/co_id/id_fitfactor"));
+const HungryLaterPaymentPageID = lazyWithPreload(() => import("./pages/co_id/id_hungrylater"));
+const JewelryPaymentPageID = lazyWithPreload(() => import("./pages/co_id/id_elroyaljewelry"));
+const ParfumPaymentPageID = lazyWithPreload(() => import("./pages/co_id/id_elroyaleparfum"));
+const Lumina = lazyWithPreload(() => import("./pages/fisik/lumina"));
+const Bra = lazyWithPreload(() => import("./pages/fisik/bra"));
+const PackagePage = lazyWithPreload(() => import("./pages/fisik/package"));
+const Research = lazyWithPreload(() => import("./pages/fisik/research"));
+const RamadhanRing = lazyWithPreload(() => import("./pages/fisik/ramadhanring"));
+
+export { 
+  Index, Shipment, Tracking, Revenue, ExportSurvey, AnalyticsDashboard,
+  DrelfPaymentPage, DrelfLanding, FitFactorPaymentPage, HungryLaterPaymentPage, JewelryPaymentPage, ParfumPaymentPage,
+  DrelfPaymentPageID, FitFactorPaymentPageID, HungryLaterPaymentPageID, JewelryPaymentPageID, ParfumPaymentPageID,
+  Lumina, Bra, PackagePage, Research, RamadhanRing
+};
 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -55,19 +68,26 @@ const PageLoader = () => (
 
 const AppContent = () => {
   const location = useLocation();
-  const isFisikRoute = (location.pathname.startsWith('/drelf') || 
-                      location.pathname.startsWith('/id_drelf') ||
-                      location.pathname.startsWith('/fitfactor') || 
-                      location.pathname.startsWith('/id_fitfactor') ||
-                      location.pathname.startsWith('/hungrylater') || 
-                      location.pathname.startsWith('/id_hungrylater') ||
-                      location.pathname.startsWith('/jewelry') || 
-                      location.pathname.startsWith('/id_jewelry') ||
-                      location.pathname.startsWith('/parfum') ||
-                      location.pathname.startsWith('/id_parfum') ||
-                      location.pathname.startsWith('/package') ||
-                      location.pathname.startsWith('/research') ||
-                      location.pathname.startsWith('/ramadhanring')) &&
+  const [searchParams] = useSearchParams();
+  const { setLang } = useLocale();
+
+  // Auto-detect Language from URL Parameters (?en or ?id)
+  useEffect(() => {
+    if (searchParams.has('en')) {
+      setLang('en');
+    } else if (searchParams.has('id')) {
+      setLang('id');
+    }
+  }, [searchParams, setLang]);
+  
+  // List of physical product/heavy landing pages that shouldn't show global nav/switcher
+  const fisikPaths = [
+    '/drelf', '/id_drelf', '/fitfactor', '/id_fitfactor', 
+    '/hungrylater', '/id_hungrylater', '/jewelry', '/id_jewelry', 
+    '/parfum', '/id_parfum', '/package', '/research', '/ramadhanring'
+  ];
+  
+  const isFisikRoute = fisikPaths.some(path => location.pathname.startsWith(path)) &&
                       !location.pathname.startsWith('/lumina') &&
                       !location.pathname.startsWith('/bra');
   
@@ -75,8 +95,11 @@ const AppContent = () => {
 
   return (
     <>
+      {/* App Shell (Visible instantly) */}
       {!isFisikRoute && !isAnalyticsRoute && <LanguageSwitcher />}
       {!isFisikRoute && !isAnalyticsRoute && <WhatsAppFloat />}
+      
+      {/* Page Content (Lazy loaded in chunks) */}
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -91,7 +114,7 @@ const AppContent = () => {
           <Route path="/research" element={<Research />} />
           <Route path="/ramadhanring" element={<RamadhanRing />} />
           
-          {/* Fisik Routes */}
+          {/* Fisik/Payment Routes */}
           <Route path="/drelf" element={<DrelfPaymentPage />} />
           <Route path="/id_drelf" element={<DrelfPaymentPageID />} />
           <Route path="/drelflp" element={<DrelfLanding />} />
@@ -107,6 +130,7 @@ const AppContent = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      
       {!isFisikRoute && !isAnalyticsRoute && <BottomNav />}
     </>
   );

@@ -4,6 +4,22 @@ import { ArrowLeft, Copy } from 'lucide-react';
 import qrisBcaImage from '@/assets/qrisbca.jpeg';
 import { useSearchParams } from 'react-router-dom';
 import { getFbcFbpCookies, getClientIp } from '@/utils/fbpixel';
+import { useLocale } from "@/contexts/LocaleContext";
+
+// --- ASSETS ---
+import singleHero1 from '@/assets/jewelry/singlering/solo1.jpeg';
+import singleThumb1 from '@/assets/jewelry/singlering/solo2.jpeg';
+import singleThumb2 from '@/assets/jewelry/singlering/solo3.jpeg';
+import singleThumb3 from '@/assets/jewelry/singlering/solo4.jpeg';
+import singleVideo from '@/assets/jewelry/singlering/solo.mp4';
+
+import coupleHero1 from '@/assets/jewelry/couple/couple_ring_ref_1_1771870223210.png';
+import coupleThumb1 from '@/assets/jewelry/couple/couple_ring_ref_3_1771869860234.png';
+import coupleThumb2 from '@/assets/jewelry/couple/couple_ring_ref_3_1771870046382.png';
+
+import coupleVideo from '@/assets/jewelry/couple/couple.mp4';
+import testpenImage from '@/assets/jewelry/testpen.jpeg';
+import certiImage from '@/assets/jewelry/certi.jpeg';
 
 const provinces = [
   "Aceh", "Sumatra Utara", "Sumatra Barat", "Riau", "Kepulauan Riau", "Jambi", "Sumatra Selatan", "Bengkulu", "Lampung", "Kepulauan Bangka Belitung",
@@ -17,13 +33,24 @@ const provinces = [
 export default function RamadhanRing() {
   const [searchParams] = useSearchParams();
   const affiliateRef = searchParams.get('id');
+  const { lang, setLang } = useLocale();
 
-  const [lang, setLang] = useState<'id' | 'en'>('id');
+  const [ringType, setRingType] = useState<'single' | 'couple'>('single');
   const [qty, setQty] = useState(1);
+  const [sizeStandard, setSizeStandard] = useState<'US' | 'Indo'>('US');
   const [size, setSize] = useState('7');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [timeLeft, setTimeLeft] = useState({ h: 23, m: 59, s: 59 });
-  const [stock, setStock] = useState(19);
+  const [stock, setStock] = useState(8);
+
+  const sizeMapping = [
+    { us: '5', indo: '10' },
+    { us: '6', indo: '13' },
+    { us: '7', indo: '15' },
+    { us: '8', indo: '18' },
+    { us: '9', indo: '20' },
+    { us: '10', indo: '22' }
+  ];
 
   // Form State
   const [userName, setUserName] = useState('');
@@ -40,8 +67,10 @@ export default function RamadhanRing() {
   const [paymentData, setPaymentData] = useState<any>(null);
   const [showPaymentInstructions, setShowPaymentInstructions] = useState(false);
 
-  const priceID = 500000;
-  const priceEN = 45;
+  const priceID = ringType === 'single' ? 500000 : 900000;
+  const priceEN = ringType === 'single' ? 45 : 80;
+  const wasPriceID = ringType === 'single' ? 2000000 : 3500000;
+  const wasPriceEN = ringType === 'single' ? 175 : 300;
 
   // Timer Effect
   useEffect(() => {
@@ -65,7 +94,7 @@ export default function RamadhanRing() {
   }, []);
 
   const toggleLang = () => {
-    setLang(prev => (prev === 'id' ? 'en' : 'id'));
+    setLang(lang === 'id' ? 'en' : 'id');
     setPaymentMethod(''); // Reset payment method on lang change
   };
 
@@ -75,9 +104,10 @@ export default function RamadhanRing() {
 
   const sendWAAlert = async (type: 'attempt' | 'success', details: any) => {
     try {
+      const productDesc = `Ramadhan Ring (${ringType}) Size ${size} (${sizeStandard})`;
       const msg = type === 'attempt' 
-        ? `🔔 *Mencoba Checkout*\nProduk: Ramadhan Ring\nNama: ${details.name}\nWA: ${details.phone}\nMetode: ${details.method}`
-        : `✅ *Checkout Sukses*\nRef: ${details.ref}\nProduk: Ramadhan Ring\nNama: ${details.name}\nWA: ${details.phone}\nTotal: ${details.amount}`;
+        ? `🔔 *Mencoba Checkout*\nProduk: ${productDesc}\nNama: ${details.name}\nWA: ${details.phone}\nMetode: ${details.method}`
+        : `✅ *Checkout Sukses*\nRef: ${details.ref}\nProduk: ${productDesc}\nNama: ${details.name}\nWA: ${details.phone}\nTotal: ${details.amount}`;
 
       await fetch('https://watzapp.web.id/api/message', {
         method: 'POST',
@@ -97,9 +127,17 @@ export default function RamadhanRing() {
   };
 
   const submitOrder = async () => {
-    if (!userName || !phoneNumber || !userAddress) {
-      alert(lang === 'id' ? '⚠️ Mohon lengkapi data diri Anda!' : '⚠️ Please complete your details!');
-      return;
+    // --- VALIDATION ---
+    if (lang === 'id') {
+      if (!userName || !phoneNumber || !userAddress || !selectedProvince || !kota || !kecamatan || !kodePos) {
+        alert('⚠️ Mohon lengkapi seluruh data diri dan alamat Anda!');
+        return;
+      }
+    } else {
+      if (!userName || !phoneNumber || !userAddress || !selectedProvince || !kota || !kecamatan || !kodePos) {
+        alert('⚠️ Please complete all your details and address fields!');
+        return;
+      }
     }
 
     if (!paymentMethod) {
@@ -111,50 +149,41 @@ export default function RamadhanRing() {
 
     const totalIDR = priceID * qty;
     const totalEN = priceEN * qty;
+    const fullAddressID = `${userAddress}, ${kecamatan}, ${kota}, ${selectedProvince}, ${kodePos}`;
+    const fullAddressEN = `${userAddress}, ${kodePos}, ${kecamatan} (City), ${kota} (State), ${selectedProvince} (Country)`;
+    const productDesc = `Ramadhan Ring (${ringType === 'single' ? 'Single' : 'Couple'}) Size ${size} (${sizeStandard})`;
 
-    // --- EN FLOW (WhatsApp / Simple) ---
-    if (lang === 'en') {
-      let payMethodText = paymentMethod === 'cod' ? 'COD' : paymentMethod === 'card' ? 'Card / PayNow' : 'Bank Transfer';
-      const msg = `🛒 *NEW ORDER – Export Ring Ramadhan Gift*\n\n👤 Name: ${userName}\n📱 Phone: ${phoneNumber}\n🏠 Address: ${userAddress}\n💍 Ring Size: ${size}\n📦 Qty: ${qty}\n💳 Pay: ${payMethodText}\n💰 Total: SGD ${totalEN}\n\nPlease confirm my order!`;
-      sendWAAlert('success', { ref: 'WA-ORDER', name: userName, phone: phoneNumber, amount: `SGD ${totalEN}` });
+    // --- EN FLOW (WhatsApp for COD) ---
+    if (lang === 'en' && paymentMethod === 'cod') {
+      const msg = `🛒 *NEW ORDER – Export Ring Ramadhan Gift*\n\n👤 Name: ${userName}\n📱 Phone: ${phoneNumber}\n🏠 Address: ${fullAddressEN}\n💍 Product: ${productDesc}\n📦 Qty: ${qty}\n💳 Pay: COD\n💰 Total: SGD ${totalEN}\n\nPlease confirm my order!`;
+      sendWAAlert('success', { ref: 'WA-ORDER-COD', name: userName, phone: phoneNumber, amount: `SGD ${totalEN}` });
       window.open(`https://wa.me/62895325633487?text=${encodeURIComponent(msg)}`, '_blank');
       return;
     }
 
-    // --- ID FLOW (Supabase Tripay) ---
-    if (!selectedProvince || !kota || !kecamatan || !kodePos) {
-      alert('⚠️ Mohon lengkapi Provinsi, Kota, Kecamatan, dan Kode Pos!');
-      return;
-    }
-
+    // --- BACKEND API FLOW (ID QRIS/BCA & EN PayPal) ---
     setLoading(true);
-    const fullAddress = `${userAddress}, ${kecamatan}, ${kota}, ${selectedProvince}, ${kodePos}`;
     const { fbc, fbp } = getFbcFbpCookies();
     const clientIp = await getClientIp();
 
     try {
-      // NOTE IF YOU WANT SENT PAYMENT to BACKEND FOR DEV:
-      // Untuk produk fisik/digital baru, JANGAN ubah backend. Cukup gunakan format payload di bawah ini:
-      // 1. subscriptionType WAJIB "universal" (Ini agar backend menerima harga & nama dari frontend)
-      // 2. productName: Nama yang akan muncul di invoice & email. 
-      //    (Backend mendeteksi kata kunci seperti "Jewelry", "Ring", "Ramadhan" untuk Pixel CAPI khusus. 
-      //     Jika tidak ada kata kunci, otomatis masuk ke Pixel Utama).
-      // 3. amount: Harga dalam angka (Integer).
-      // 4. Pastikan menggunakan `supabase.functions.invoke` agar request tidak error 401 Unauthorized.
+      const backendPaymentMethod = lang === 'en' ? 'PAYPAL' : (paymentMethod === 'bca_manual' ? 'BCA_MANUAL' : 'QRIS');
+
       const payload = {
         subscriptionType: 'universal', // ⚠️ WAJIB TETAP 'universal'
-        paymentMethod: paymentMethod === 'bca_manual' ? 'BCA_MANUAL' : 'QRIS',
+        paymentMethod: backendPaymentMethod,
         userName,
         userEmail: userEmail || `customer_${phoneNumber}@guest.com`,
         phoneNumber,
-        address: fullAddress,
+        address: lang === 'id' ? fullAddressID : fullAddressEN,
         province: selectedProvince,
         kota,
         kecamatan,
         kodePos,
-        amount: totalIDR,
+        amount: lang === 'id' ? totalIDR : totalEN,
+        currency: lang === 'id' ? 'IDR' : 'SGD',
         quantity: 1, // Send as 1 because amount is already total
-        productName: `Export Ring Ramadhan - Size ${size} (x${qty})`,
+        productName: `Export Ring Ramadhan - ${productDesc} (x${qty})`,
         affiliateRef,
         fbc,
         fbp,
@@ -164,11 +193,16 @@ export default function RamadhanRing() {
       const { data, error } = await supabase.functions.invoke('tripay-create-payment', { body: payload });
 
       if (data?.success) {
+        if (lang === 'en' && paymentMethod === 'paypal' && data.checkoutUrl) {
+          sendWAAlert('success', { ref: data.tripay_reference || 'PAYPAL', name: userName, phone: phoneNumber, amount: `SGD ${totalEN}` });
+          window.location.href = data.checkoutUrl;
+          return;
+        }
+
         setPaymentData(data);
         setShowPaymentInstructions(true);
         sendWAAlert('success', { ref: data.tripay_reference, name: userName, phone: phoneNumber, amount: `Rp ${totalIDR.toLocaleString('id-ID')}` });
       } else if (paymentMethod === 'bca_manual') {
-        // Fallback for manual transfer if backend doesn't return success explicitly
         const ref = `MANUAL-${Date.now()}`;
         setPaymentData({ 
           paymentMethod: 'BCA_MANUAL', 
@@ -179,10 +213,10 @@ export default function RamadhanRing() {
         setShowPaymentInstructions(true);
         sendWAAlert('success', { ref, name: userName, phone: phoneNumber, amount: `Rp ${totalIDR.toLocaleString('id-ID')}` });
       } else {
-        alert(data?.error || error?.message || "Gagal membuat pembayaran, hubungi admin via WhatsApp.");
+        alert(data?.error || error?.message || (lang === 'id' ? "Gagal membuat pembayaran, hubungi admin via WhatsApp." : "Failed to create payment, please contact admin."));
       }
     } catch (e) {
-      alert('Network Error. Please order via WhatsApp.');
+      alert(lang === 'id' ? 'Network Error. Silakan pesan via WhatsApp.' : 'Network Error. Please order via WhatsApp.');
       console.error(e);
     } finally {
       setLoading(false);
@@ -322,25 +356,47 @@ export default function RamadhanRing() {
         .product-section > .media-area { display: flex; }
         .product-section > .media-thumbs { display: grid; }
         .product-section > .video-placeholder { display: flex; }
+        .product-section > .type-toggle { display: flex; }
 
-        /* MEDIA PLACEHOLDER */
-        .media-area { margin-top: 20px; border-radius: 12px; overflow: hidden; position: relative; background: linear-gradient(145deg, #E8D5A3, #C9A84C, #8B6914); aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; cursor: pointer; border: 2px dashed rgba(201,168,76,.5); }
-        .media-placeholder-icon { font-size: 40px; opacity: .7; }
-        .media-placeholder-text { color: rgba(255,255,255,.85); font-size: 13px; font-weight: 500; text-align: center; padding: 0 20px; line-height: 1.5; }
-        .media-placeholder-sub { color: rgba(255,255,255,.6); font-size: 11px; text-align: center; }
-        .media-badge { position: absolute; top: 12px; right: 12px; background: var(--red); color: white; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; }
+        /* TYPE TOGGLE */
+        .type-toggle {
+          background: #e6dfcc;
+          border-radius: 50px;
+          padding: 4px;
+          margin-top: 20px;
+          gap: 4px;
+        }
+        .type-btn {
+          flex: 1;
+          padding: 10px;
+          border-radius: 50px;
+          border: none;
+          background: transparent;
+          font-family: 'DM Sans';
+          font-size: 14px;
+          font-weight: 600;
+          color: #6b6045;
+          cursor: pointer;
+          transition: all .3s;
+        }
+        .type-btn.active {
+          background: white;
+          color: var(--deep);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
 
+        /* MEDIA AREA */
+        .media-area { margin-top: 12px; border-radius: 12px; overflow: hidden; position: relative; aspect-ratio: 1/1; }
+        .media-area img { width: 100%; height: 100%; object-fit: cover; }
+        
         .media-thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
-        .thumb-placeholder { aspect-ratio: 1; background: linear-gradient(145deg, #f0e4c0, #c9a84c44); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px; cursor: pointer; border: 1.5px dashed rgba(201,168,76,.4); transition: border-color .2s; }
-        .thumb-placeholder:hover { border-color: var(--gold); }
-        .thumb-placeholder span:first-child { font-size: 20px; }
-        .thumb-placeholder span:last-child { font-size: 10px; color: #8B6914; font-weight: 500; }
+        .thumb-img { aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1.5px solid transparent; transition: border-color .2s; cursor: pointer; }
+        .thumb-img:hover { border-color: var(--gold); }
+        .thumb-img img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* VIDEO PLACEHOLDER */
-        .video-placeholder { margin-top: 8px; aspect-ratio: 16/9; background: linear-gradient(135deg, #1a1208, #2d2410); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; cursor: pointer; border: 2px dashed rgba(201,168,76,.3); position: relative; overflow: hidden; }
-        .play-btn { width: 52px; height: 52px; border-radius: 50%; background: rgba(201,168,76,.85); display: flex; align-items: center; justify-content: center; font-size: 22px; transition: transform .2s; }
-        .video-placeholder:hover .play-btn { transform: scale(1.1); }
-        .video-label { color: rgba(255,255,255,.7); font-size: 12px; text-align: center; padding: 0 20px; }
+        /* VIDEO */
+        .video-container { margin-top: 8px; aspect-ratio: 1/1; border-radius: 10px; overflow: hidden; position: relative; }
+        .video-container video { width: 100%; height: 100%; object-fit: cover; }
 
         /* ─── PRODUCT INFO ─── */
         .product-title { font-family: 'Playfair Display', serif; font-size: clamp(20px, 5vw, 28px); line-height: 1.2; color: var(--deep); margin-top: 20px; text-align: center; }
@@ -385,7 +441,9 @@ export default function RamadhanRing() {
         .size-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .size-btn { width: 42px; height: 42px; border-radius: 8px; border: 1.5px solid rgba(201,168,76,.3); background: var(--cream); font-size: 13px; font-weight: 600; color: var(--deep); cursor: pointer; transition: all .2s; font-family: 'DM Sans'; }
         .size-btn.active { background: var(--deep); border-color: var(--gold); color: var(--gold-light); }
-        .size-btn:hover:not(.active) { border-color: var(--gold); background: var(--gold-pale); }
+        .size-btn:hover:not(.active):not(.sold-out) { border-color: var(--gold); background: var(--gold-pale); }
+        .size-btn.sold-out { opacity: 0.6; cursor: not-allowed; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f0f0f0; color: #999; border-color: #ddd; }
+        .size-btn.sold-out .so-tag { font-size: 7px; font-weight: 800; text-transform: uppercase; margin-top: -2px; }
 
         /* QTY */
         .qty-row { display: flex; align-items: center; gap: 12px; }
@@ -424,8 +482,19 @@ export default function RamadhanRing() {
         .rb-sub { color: rgba(255,255,255,.65); font-size: 12px; margin-top: 3px; }
 
         /* Stock badge */
-        .stock-badge { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #856404; font-weight: 600; text-align: center; margin-top: 12px; animation: blink-border 2s ease-in-out infinite; }
+        .stock-badge { background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 16px 20px; font-size: 18px; color: #856404; font-weight: 800; text-align: center; margin-top: 16px; animation: blink-border 2s ease-in-out infinite; }
         @keyframes blink-border { 0%,100%{border-color:#ffc107} 50%{border-color:#fd7e14} }
+
+        /* REVIEWS & FAQ */
+        .review-section { background: white; border-radius: 12px; padding: 20px; margin-top: 24px; border: 1px solid rgba(201,168,76,.2); }
+        .review-stars { color: #ffc107; font-size: 20px; margin-bottom: 8px; }
+        .review-text { font-size: 14px; font-style: italic; color: var(--ink); }
+        
+        .faq-section { margin-top: 24px; }
+        .faq-item { background: white; border-radius: 10px; padding: 16px; margin-bottom: 10px; border: 1px solid rgba(201,168,76,.15); }
+        .faq-q { font-weight: 700; font-size: 14px; color: var(--deep); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .faq-a { font-size: 13px; color: #6b6045; line-height: 1.5; }
+        .tester-img { width: 100%; border-radius: 10px; margin-top: 12px; border: 1px solid #eee; }
       `}</style>
 
       {/* LANG BAR */}
@@ -478,6 +547,7 @@ export default function RamadhanRing() {
 
       {/* MAIN PRODUCT SECTION */}
       <div className="product-section">
+        
         {/* TIMER */}
         <div className="timer-wrap">
           <div className="timer-icon">⏰</div>
@@ -494,27 +564,32 @@ export default function RamadhanRing() {
           </div>
         </div>
 
-        {/* MAIN IMAGE PLACEHOLDER */}
-        <div className="media-area" onClick={() => alert('📸 Upload foto produk utama (ratio 4:3, min 1200×900px)\nContoh: foto cincin close-up dengan background mewah')}>
-          <div className="media-badge" style={{ display: lang === 'id' ? 'block' : 'none' }}>FOTO UTAMA</div>
-          <div className="media-badge" style={{ display: lang === 'en' ? 'block' : 'none' }}>MAIN PHOTO</div>
-          <div className="media-placeholder-icon">📸</div>
-          <div className="media-placeholder-text" style={{ display: lang === 'id' ? 'block' : 'none' }}>📌 UNTUK TIM KREATIF<br />Upload Foto Produk Utama Cincin<br /><strong>White Gold + Moissanite 3 Carat</strong></div>
-          <div className="media-placeholder-text" style={{ display: lang === 'en' ? 'block' : 'none' }}>📌 FOR CREATIVE TEAM<br />Upload Main Ring Product Photo<br /><strong>White Gold Plated + Moissanite 3 Carat</strong></div>
+        {/* SINGLE RING MEDIA */}
+        <div className="section-title" style={{ textAlign: 'center', marginTop: '24px' }}>💍 Single Ring Collection</div>
+        <div className="media-area">
+          <img src={singleHero1} alt="Single Ring" />
         </div>
-
-        {/* THUMBNAIL PLACEHOLDERS */}
         <div className="media-thumbs">
-          <div className="thumb-placeholder" onClick={() => alert('📸 Foto Detail 1')}><span>💎</span><span>{lang === 'id' ? 'Batu Detail' : 'Stone Detail'}</span></div>
-          <div className="thumb-placeholder" onClick={() => alert('📸 Foto Detail 2')}><span>✨</span><span>White Gold</span></div>
-          <div className="thumb-placeholder" onClick={() => alert('📸 Foto Lifestyle')}><span>🤍</span><span>Lifestyle</span></div>
+          <div className="thumb-img"><img src={singleThumb1} alt="Thumb 1" /></div>
+          <div className="thumb-img"><img src={singleThumb2} alt="Thumb 2" /></div>
+          <div className="thumb-img"><img src={singleThumb3} alt="Thumb 3" /></div>
+        </div>
+        <div className="video-container">
+          <video src={singleVideo} controls autoPlay muted loop playsInline />
         </div>
 
-        {/* VIDEO PLACEHOLDER */}
-        <div className="video-placeholder" onClick={() => alert('🎬 UNTUK TIM KREATIF – VIDEO')}>
-          <div className="play-btn">▶️</div>
-          <div className="video-label" style={{ display: lang === 'id' ? 'block' : 'none' }}>📌 TIM KREATIF: Upload Video Produk<br />Durasi 15–30 detik · Format MP4 · 1080p</div>
-          <div className="video-label" style={{ display: lang === 'en' ? 'block' : 'none' }}>📌 CREATIVE TEAM: Upload Product Video<br />15–30 sec · MP4 Format · 1080p</div>
+        {/* COUPLE RING MEDIA */}
+        <div className="section-title" style={{ textAlign: 'center', marginTop: '36px' }}>👩‍❤️‍👨 Couple Ring Collection</div>
+        <div className="media-area">
+          <img src={coupleHero1} alt="Couple Ring" />
+        </div>
+        <div className="media-thumbs">
+          <div className="thumb-img"><img src={coupleHero1} alt="Thumb 1" /></div>
+          <div className="thumb-img"><img src={coupleThumb1} alt="Thumb 2" /></div>
+          <div className="thumb-img"><img src={coupleThumb2} alt="Thumb 3" /></div>
+        </div>
+        <div className="video-container">
+          <video src={coupleVideo} controls autoPlay muted loop playsInline />
         </div>
 
         {/* PRODUCT TITLE */}
@@ -525,23 +600,164 @@ export default function RamadhanRing() {
 
         {/* PRICE BLOCK */}
         <div className="price-block">
-          <div className="price-was" style={{ display: lang === 'id' ? 'block' : 'none' }}>Rp 2.000.000</div>
-          <div className="price-was" style={{ display: lang === 'en' ? 'block' : 'none' }}>SGD 175</div>
-          <div className="price-now" style={{ display: lang === 'id' ? 'block' : 'none' }}>Rp 500.000</div>
-          <div className="price-now" style={{ display: lang === 'en' ? 'block' : 'none' }}>SGD 45</div>
+          <div className="price-was" style={{ display: lang === 'id' ? 'block' : 'none' }}>Rp {wasPriceID.toLocaleString('id-ID')}</div>
+          <div className="price-was" style={{ display: lang === 'en' ? 'block' : 'none' }}>SGD {wasPriceEN}</div>
+          <div className="price-now" style={{ display: lang === 'id' ? 'block' : 'none' }}>Rp {priceID.toLocaleString('id-ID')}</div>
+          <div className="price-now" style={{ display: lang === 'en' ? 'block' : 'none' }}>SGD {priceEN}</div>
           <div>
             <span className="price-save" style={{ display: lang === 'id' ? 'inline-block' : 'none' }}>HEMAT 75% · HANYA 24 JAM!</span>
             <span className="price-save" style={{ display: lang === 'en' ? 'inline-block' : 'none' }}>SAVE 75% · 24 HOURS ONLY!</span>
           </div>
           <div style={{ color: 'var(--gold-light)', fontSize: '12px', marginTop: '8px', opacity: 0.8 }}>
-            <span style={{ display: lang === 'id' ? 'inline' : 'none' }}>⭐ Senilai Rp 2.000.000 – Kualitas yang tidak bohong</span>
-            <span style={{ display: lang === 'en' ? 'inline' : 'none' }}>⭐ Valued at SGD 175 – Unmatched quality at this price</span>
+            <span style={{ display: lang === 'id' ? 'inline' : 'none' }}>⭐ Senilai Rp {wasPriceID.toLocaleString('id-ID')} – Kualitas yang tidak bohong</span>
+            <span style={{ display: lang === 'en' ? 'inline' : 'none' }}>⭐ Valued at SGD {wasPriceEN} – Unmatched quality at this price</span>
           </div>
         </div>
 
         {/* STOCK */}
         <div className="stock-badge" style={{ display: lang === 'id' ? 'block' : 'none' }}>⚠️ Sisa <span style={{ textDecoration: 'line-through' }}>100</span> <strong>{stock}</strong> pcs lagi !!</div>
         <div className="stock-badge" style={{ display: lang === 'en' ? 'block' : 'none' }}>⚠️ Limited Stock! Only <strong>{stock}</strong> pcs remaining today</div>
+
+        {/* REVIEWS */}
+        <div className="review-section">
+          <div className="review-stars">⭐⭐⭐⭐⭐</div>
+          <div className="review-text">
+            {lang === 'id' 
+              ? "Kualitasnya bener-bener mewah, kilaunya persis berlian asli. Sudah saya tes pake diamond tester dan tembus! Packaging juga sangat premium. Recommended banget untuk kado Ramadhan."
+              : "The quality is truly luxurious, the brilliance is exactly like a real diamond. I tested it with a diamond tester and it passed! Premium packaging too. Highly recommended for a Ramadhan gift."
+            }
+          </div>
+          <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: '#8B6914' }}>— Sarah W. 🇮🇩 (Verified Buyer)</div>
+          
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+            <div className="review-stars">⭐⭐⭐⭐⭐</div>
+            <div className="review-text">
+              {lang === 'id' 
+                ? "Kado ulang tahun pernikahan paling berkesan. Istri suka banget sama kilau Moissanite-nya. Beneran beda sama perhiasan biasa."
+                : "Most memorable wedding anniversary gift. My wife loves the Moissanite's sparkle. It really stands out compared to regular jewelry."
+              }
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: '#8B6914' }}>— Budi H. 🇮🇩 (Verified Buyer)</div>
+          </div>
+
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+            <div className="review-stars">⭐⭐⭐⭐⭐</div>
+            <div className="review-text">
+              {lang === 'id' 
+                ? "Fast delivery to Singapore! Cincinnya bener-bener berkilau dan mewah. Gak nyesel beli di sini."
+                : "Fast delivery to Singapore! The ring is truly sparkly and luxurious. No regrets buying here."
+              }
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: '#8B6914' }}>— Mei Ling 🇸🇬 (Verified Buyer)</div>
+          </div>
+
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+            <div className="review-stars">⭐⭐⭐⭐⭐</div>
+            <div className="review-text">
+              {lang === 'id' 
+                ? "Terbaik! Lolos diamond tester. Sangat puas dengan kualitinya. Penghantaran ke Malaysia sangat laju."
+                : "Excellent! Passed the diamond tester. Very satisfied with the quality. Delivery to Malaysia was very fast."
+              }
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: '#8B6914' }}>— Zulkifli 🇲🇾 (Verified Buyer)</div>
+          </div>
+
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+            <div className="review-stars">⭐⭐⭐⭐⭐</div>
+            <div className="review-text">
+              {lang === 'id' 
+                ? "Kualiti premium. Sangat cantik buat kado tunang. Packaging pun eksklusif sangat."
+                : "Premium quality. Very beautiful for an engagement gift. The packaging is also very exclusive."
+              }
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: '#8B6914' }}>— Siti R. 🇧🇳 (Verified Buyer)</div>
+          </div>
+
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+            <div className="review-stars">⭐⭐⭐⭐⭐</div>
+            <div className="review-text">
+              {lang === 'id' 
+                ? "Luxury packaging and real 925 silver. Moissanite-nya sangat jernih. Pass tester perfectamente!"
+                : "Luxury packaging and real 925 silver. The moissanite is very clear. Passed the tester perfectly!"
+              }
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: '#8B6914' }}>— Omar K. 🇦🇪 (Verified Buyer)</div>
+          </div>
+
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+            <div className="review-stars">⭐⭐⭐⭐⭐</div>
+            <div className="review-text">
+              {lang === 'id' 
+                ? "Desainnya sangat elegan. Pengiriman internasional sangat cepat ke Tokyo. Terima kasih!"
+                : "Very elegant design. International shipping was fast to Tokyo. Thank you!"
+              }
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: '#8B6914' }}>— Yuki H. 🇯🇵 (Verified Buyer)</div>
+          </div>
+
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+            <div className="review-stars">⭐⭐⭐⭐⭐</div>
+            <div className="review-text">
+              {lang === 'id' 
+                ? "Very happy with this purchase. Quality is top notch. Passed my diamond tester easily."
+                : "Very happy with this purchase. Quality is top notch. Passed my diamond tester easily."
+              }
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: '#8B6914' }}>— Michael T. 🇺🇸 (Verified Buyer)</div>
+          </div>
+
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+            <div className="review-stars">⭐⭐⭐⭐⭐</div>
+            <div className="review-text">
+              {lang === 'id' 
+                ? "Cincinnya cantik sekali, ukurannya pas banget sesuai panduan. CS sangat responsif membantu."
+                : "The ring is so beautiful, fits perfectly according to the guide. CS is very responsive."
+              }
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: '#8B6914' }}>— Anita S. 🇦🇺 (Verified Buyer)</div>
+          </div>
+
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+            <div className="review-stars">⭐⭐⭐⭐⭐</div>
+            <div className="review-text">
+              {lang === 'id' 
+                ? "Sangat puas! Moissanite-nya bener-bener berkilau, bahkan di tempat redup. Gak nyesel beli couple ring buat tunangan."
+                : "Very satisfied! The moissanite really sparkles, even in dim light. No regrets buying the couple ring for my engagement."
+              }
+            </div>
+            <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: 700, color: '#8B6914' }}>— Riza A. 🇮🇩 (Verified Buyer)</div>
+          </div>
+        </div>
+
+        {/* FAQ */}
+        <div className="faq-section">
+          <div className="section-title">❓ FAQ</div>
+          
+          <div className="faq-item">
+            <div className="faq-q">📦 {lang === 'id' ? 'Berapa lama pengirimannya?' : 'How long is the delivery?'}</div>
+            <div className="faq-a">{lang === 'id' ? 'Pengiriman memakan waktu 3-7 hari kerja tergantung lokasi Anda di Asia.' : 'Shipping takes 3-7 business days depending on your location in Asia.'}</div>
+          </div>
+
+          <div className="faq-item">
+            <div className="faq-q">📜 {lang === 'id' ? 'Apakah ada bukti Moissanite asli?' : 'Is there proof it is real Moissanite?'}</div>
+            <div className="faq-a">
+              {lang === 'id' 
+                ? 'Setiap perhiasan kami dilengkapi dengan sertifikat keaslian Moissanite yang menjamin kualitas batu dan spesifikasinya.' 
+                : 'Each piece of our jewelry comes with a certificate of Moissanite authenticity that guarantees the stone quality and specifications.'}
+              <img src={certiImage} alt="Certificate" className="tester-img" />
+            </div>
+          </div>
+
+          <div className="faq-item">
+            <div className="faq-q">💎 {lang === 'id' ? 'Apakah lolos Diamond Tester?' : 'Does it pass Diamond Tester?'}</div>
+            <div className="faq-a">
+              {lang === 'id' 
+                ? 'Ya, batu Moissanite kami memiliki konduktivitas termal yang sama dengan berlian, sehingga dijamin lolos Diamond Tester.' 
+                : 'Yes, our Moissanite stones have the same thermal conductivity as diamonds, guaranteed to pass the Diamond Tester.'}
+              <img src={testpenImage} alt="Diamond Tester" className="tester-img" />
+            </div>
+          </div>
+        </div>
 
         {/* KEUNGGULAN */}
         <div className="section-title" style={{ display: lang === 'id' ? 'block' : 'none' }}>⚡ Kenapa Produk Ini Luar Biasa?</div>
@@ -610,7 +826,7 @@ export default function RamadhanRing() {
               </div>
               <div className="form-group">
                 <label className="form-label">Nomor WhatsApp</label>
-                <input className="form-input" type="tel" placeholder="08..." value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} />
+                <input className="form-input" type="tel" id="phone-input" placeholder="08..." value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} />
               </div>
               <div className="form-group">
                 <label className="form-label">Provinsi</label>
@@ -629,7 +845,7 @@ export default function RamadhanRing() {
               </div>
               <div className="form-group">
                 <label className="form-label">Alamat Lengkap</label>
-                <input className="form-input" type="text" placeholder="Jl. Sudirman No. 123..." value={userAddress} onChange={e => setUserAddress(e.target.value)} />
+                <input className="form-input" type="text" id="address-input" placeholder="Jl. Sudirman No. 123..." value={userAddress} onChange={e => setUserAddress(e.target.value)} />
               </div>
               <div className="form-group">
                 <label className="form-label">Kode Pos</label>
@@ -644,22 +860,98 @@ export default function RamadhanRing() {
               </div>
               <div className="form-group">
                 <label className="form-label">WhatsApp / Phone Number</label>
-                <input className="form-input" type="tel" placeholder="+65 / +60..." value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} />
+                <input className="form-input" type="tel" id="phone-input" placeholder="+65 / +60..." value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Country</label>
+                <input className="form-input" type="text" placeholder="e.g. Singapore, Malaysia" value={selectedProvince} onChange={e => setSelectedProvince(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">State / Province</label>
+                <input className="form-input" type="text" placeholder="State/Region" value={kota} onChange={e => setKota(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">City</label>
+                <input className="form-input" type="text" placeholder="City" value={kecamatan} onChange={e => setKecamatan(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Postal Code</label>
+                <input className="form-input" type="text" placeholder="Postal Code" value={kodePos} onChange={e => setKodePos(e.target.value)} />
               </div>
               <div className="form-group">
                 <label className="form-label">Delivery Address</label>
-                <input className="form-input" type="text" placeholder="Street, City, Country" value={userAddress} onChange={e => setUserAddress(e.target.value)} />
+                <input className="form-input" type="text" id="address-input" placeholder="Street name, Building, Unit No." value={userAddress} onChange={e => setUserAddress(e.target.value)} />
               </div>
             </>
           )}
 
           <div className="form-group">
-            <label className="form-label" style={{ display: lang === 'id' ? 'block' : 'none' }}>Ukuran Cincin</label>
-            <label className="form-label" style={{ display: lang === 'en' ? 'block' : 'none' }}>Ring Size</label>
+            <label className="form-label" style={{ display: lang === 'id' ? 'block' : 'none' }}>Pilih Tipe Cincin</label>
+            <label className="form-label" style={{ display: lang === 'en' ? 'block' : 'none' }}>Select Ring Type</label>
+            <div className="pay-opts">
+              <div className={`pay-opt ${ringType === 'single' ? 'active' : ''}`} onClick={() => setRingType('single')}>
+                <div className="po-icon">💍</div>
+                <div className="po-label">Single Ring</div>
+                <div style={{fontSize:'10px', color:'var(--gold)', marginTop:'2px'}}>{lang==='id'?'Rp 500.000':'SGD 45'}</div>
+              </div>
+              <div className={`pay-opt ${ringType === 'couple' ? 'active' : ''}`} onClick={() => setRingType('couple')}>
+                <div className="po-icon">👩‍❤️‍👨</div>
+                <div className="po-label">Couple Ring</div>
+                <div style={{fontSize:'10px', color:'var(--gold)', marginTop:'2px'}}>{lang==='id'?'Rp 900.000':'SGD 80'}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label className="form-label" style={{ margin: 0 }}>
+                {lang === 'id' ? 'Ukuran Cincin' : 'Ring Size'}
+              </label>
+              <div style={{ display: 'flex', background: '#eee', borderRadius: '20px', padding: '2px' }}>
+                <button 
+                  onClick={() => setSizeStandard('US')}
+                  style={{ 
+                    border: 'none', 
+                    background: sizeStandard === 'US' ? 'var(--deep)' : 'transparent', 
+                    color: sizeStandard === 'US' ? 'white' : '#666',
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    cursor: 'pointer'
+                  }}
+                >US</button>
+                <button 
+                  onClick={() => setSizeStandard('Indo')}
+                  style={{ 
+                    border: 'none', 
+                    background: sizeStandard === 'Indo' ? 'var(--deep)' : 'transparent', 
+                    color: sizeStandard === 'Indo' ? 'white' : '#666',
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    cursor: 'pointer'
+                  }}
+                >Indo</button>
+              </div>
+            </div>
             <div className="size-row">
-              {['5', '6', '7', '8', '9', '10'].map(s => (
-                <button key={s} className={`size-btn ${size === s ? 'active' : ''}`} onClick={() => setSize(s)}>{s}</button>
-              ))}
+              {sizeMapping.map(item => {
+                const isSoldOut = ['5', '9', '10'].includes(item.us);
+                const label = sizeStandard === 'US' ? item.us : item.indo;
+                return (
+                  <button 
+                    key={item.us} 
+                    className={`size-btn ${size === item.us ? 'active' : ''} ${isSoldOut ? 'sold-out' : ''}`} 
+                    onClick={() => !isSoldOut && setSize(item.us)}
+                    disabled={isSoldOut}
+                  >
+                    <span>{label}</span>
+                    {isSoldOut && <span className="so-tag">SOLD</span>}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -685,13 +977,9 @@ export default function RamadhanRing() {
                   <div className="po-icon">🚪</div>
                   <div className="po-label">COD</div>
                 </div>
-                <div className={`pay-opt ${paymentMethod === 'card' ? 'active' : ''}`} onClick={() => setPaymentMethod('card')}>
+                <div className={`pay-opt ${paymentMethod === 'paypal' ? 'active' : ''}`} onClick={() => setPaymentMethod('paypal')}>
                   <div className="po-icon">💳</div>
-                  <div className="po-label">Card / PayNow</div>
-                </div>
-                <div className={`pay-opt ${paymentMethod === 'bank' ? 'active' : ''}`} onClick={() => setPaymentMethod('bank')}>
-                  <div className="po-icon">🏦</div>
-                  <div className="po-label">Bank Transfer</div>
+                  <div className="po-label">PayPal / Card</div>
                 </div>
               </div>
               <div style={{ fontSize: '11px', color: '#1E6B3C', marginTop: '6px', fontWeight: 600 }}>✅ COD available for Singapore, Malaysia & selected countries</div>

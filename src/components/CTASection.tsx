@@ -1,6 +1,7 @@
 import { useLocale } from "@/contexts/LocaleContext";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import * as Pages from "@/App";
 
 const CTASection = () => {
   const { t } = useLocale();
@@ -27,12 +28,14 @@ const CTASection = () => {
             <Link
               to="/survey?role=seller"
               className="gradient-gold rounded-lg px-8 py-3 font-semibold text-primary-foreground transition-all hover:opacity-90"
+              onMouseEnter={() => (Pages.ExportSurvey as any).preload?.()}
             >
               {t("I Want to Sell", "Saya Ingin Menjual")}
             </Link>
             <Link
               to="/survey?role=buyer"
               className="rounded-lg border border-primary px-8 py-3 font-semibold text-primary transition-all hover:bg-primary/10"
+              onMouseEnter={() => (Pages.ExportSurvey as any).preload?.()}
             >
               {t("I Want to Buy", "Saya Ingin Membeli")}
             </Link>
