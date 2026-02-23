@@ -105,6 +105,7 @@ export default function RamadhanRing() {
             pixelId: 'CAPI_JEWELRY',
             eventName: 'ViewContent',
             eventSourceUrl: window.location.href,
+            testCode: 'TEST54644', // TEST MODE
             customData: {
               content_name: 'Jewelry Export Ring Ramadhan',
               value: priceID,
@@ -208,6 +209,7 @@ export default function RamadhanRing() {
             pixelId: 'CAPI_JEWELRY',
             eventName: 'AddPaymentInfo',
             eventSourceUrl: window.location.href,
+            testCode: 'TEST54644', // TEST MODE
             customData: {
               content_name: `Jewelry Export Ring Ramadhan - ${productDesc} (x${qty})`,
               value: lang === 'id' ? totalIDR : totalEN,
@@ -245,7 +247,8 @@ export default function RamadhanRing() {
         affiliateRef,
         fbc,
         fbp,
-        clientIp
+        clientIp,
+        testCode: 'TEST54644' // TEST MODE
       };
 
       const { data, error } = await supabase.functions.invoke('tripay-create-payment', { body: payload });
