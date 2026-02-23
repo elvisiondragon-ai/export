@@ -1,51 +1,53 @@
-# Session Report: Ramadhan Ring Integration & Performance Optimization
+# Session Report: Ramadhan Ring Integration, Global Localization & Performance Optimization
 **Date:** 24 February 2026
-**Topic:** Fisik Restoration / Performance
+**Topic:** Fisik Restoration / Performance / Global Localization
 
 ## 1. Context
-The objective was to fully integrate the new **Research** and **Ramadhan Ring** landing pages into the existing React architecture, ensuring full localization (ID/EN), robust payment processing (Tripay/PayPal), and top-tier loading performance.
+The objective was to fully integrate the new **Research** and **Ramadhan Ring** landing pages into the React architecture, ensuring full localization (ID/EN) triggered by URL parameters, robust payment processing, and top-tier loading performance via lazy loading.
 
 ## 2. Completed Tasks
 
-### A. Ramadhan Ring Landing Page (/ramadhanring)
-- **React Conversion:** Transformed the static HTML design into a dynamic React component.
-- **Vertical Layout:** Switched from a toggle-based media view to a stacked vertical display for both Single and Couple ring collections.
-- **Dynamic Pricing:** Implemented Single Ring (Rp 500k / SGD 45) and Couple Ring (Rp 900k / SGD 80) variants with automatic price updates.
+### A. Global Localization & Parameter Handling
+- **URL Parameter Detection:** Implemented a global `useEffect` in `App.tsx` that monitors `?id` and `?en`. 
+    - `?id` automatically switches the entire app to Indonesian (and sets currency to IDR).
+    - `?en` switches the app to English (and sets currency to SGD).
+- **Context Integration:** Refactored `RamadhanRing.tsx` and `Research.tsx` to use the global `useLocale` hook, removing redundant local state and ensuring a "single source of truth."
+
+### B. Ramadhan Ring Landing Page (/ramadhanring)
+- **Vertical Media Display:** Stacked Single and Couple ring collections vertically.
+- **Dynamic Pricing:** Automatic price switching between Rp 500k/900k and SGD 45/80.
 - **Ring Size Mastery:**
     - Added a **US/Indo toggle** for size standards.
-    - Mapped US (5-10) to Indo (10-22) equivalents.
-    - Enforced **SOLD OUT** status for sizes 5, 9, and 10 (US).
-- **Checkout Logic:**
-    - Integrated **WA API (watzapp.web.id)** for attempt and success alerts.
-    - **ID Flow:** Full address validation (Province dropdown, City, District, ZIP) with QRIS/BCA manual support via Supabase.
-    - **EN Flow:** Global address format with **PayPal** redirection and WhatsApp COD support.
-- **Trust Elements:**
-    - Enhanced stock badge (Urgency: 8 pcs).
-    - Added 10 international verified reviews with country flags.
-    - Integrated visual proofs in FAQ: `testpen.jpeg` (Diamond Tester) and `certi.jpeg` (Authenticity Certificate).
+    - Full mapping: US (5-10) to Indo (10-22).
+    - Hardcoded **SOLD OUT** status for sizes 5, 9, and 10 (US).
+- **Asset Refinement:**
+    - Switched to a **universal hero image** for the Couple collection that works for all markets.
+    - Fixed Single Ring asset paths (`solo1.jpeg` through `solo4.jpeg`) to resolve build errors.
+- **Checkout & Trust:**
+    - Integrated **WA API** alerts for checkout tracking.
+    - Added 10 international verified reviews with flags.
+    - Integrated FAQ with visual proof: `testpen.jpeg` (Tester) and `certi.jpeg` (Certificate).
 
-### B. Research Landing Page (/research)
-- **React Conversion:** Fully localized component with ID/EN toggle.
-- **UI Fixes:** Rectified mobile navigation positioning and vertical stacking for the cost comparison section.
-- **Route Registration:** Hidden from global navigation but accessible via `/research`.
+### C. Research Landing Page (/research)
+- **React Conversion:** Fully localized with the global parameter-aware toggle.
+- **UI Fixes:** Fixed mobile navigation and vertical stacking for the cost comparison section.
 
-### C. Performance Optimization
-- **Route-based Code Splitting:** Applied `React.lazy` to all page routes in `App.tsx`.
-- **App Shell Architecture:** Kept critical nav and providers static for instant visibility.
-- **Hover Prefetching:** Implemented a `lazyWithPreload` utility. The app now begins downloading page chunks the moment a user hovers over a navigation or CTA link, making page transitions feel "instant."
+### D. Performance Optimization
+- **Route-based Code Splitting:** Applied `React.lazy` to all page routes.
+- **App Shell Architecture:** Core navigation and providers remain static for instant shell visibility.
+- **Hover Prefetching:** Implemented `lazyWithPreload`. Assets begin downloading as soon as a user hovers over a link, making page transitions feel "instant."
 
 ## 3. Technical Integrity
-- **Build Status:** `npm run build` verified successful.
-- **CAPI/Pixel:** Correctly signal `subscriptionType: 'universal'` for generic physical product handling in the backend.
-- **Cache-Busting:** Ready for version bump upon git push.
+- **Build Status:** `npm run build` verified successful after resolving asset path issues.
+- **CAPI/Pixel:** Signals `subscriptionType: 'universal'` for generic physical product handling.
 
 ## 4. Problem/Solution Summary
 | Issue | Root Cause | Solution |
 |-------|------------|----------|
-| Heavy Initial Load | All landing page assets loading at once. | Route-based Lazy Loading + Preloading. |
-| Size Standard Confusion | Customers use different standards (US vs Indo). | US/Indo Toggle with real-time mapping. |
-| Missing Global Addresses | ID form wasn't suitable for SG/MY buyers. | Conditional "Global" address layout for EN users. |
-| Notification Gap | No visibility on checkout attempts. | Automated WA API alerts to `62895325633487`. |
+| Confusing Language Toggles | Manual toggles didn't respect marketing URLs. | Global `?id`/`?en` detection in `App.tsx`. |
+| Build Errors | Missing/Deleted asset references. | Audited `src/assets` and updated imports to valid files (`solo1.jpeg`, etc.). |
+| Size Standard Friction | US vs Indo sizing varies by region. | Added real-time US/Indo toggle in the checkout form. |
+| Loading Speed | Heavy assets on landing pages. | Implemented Lazy Loading + Hover Prefetching. |
 
 ---
 *Report generated by Gemini CLI*

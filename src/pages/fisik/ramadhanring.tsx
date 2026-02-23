@@ -93,6 +93,38 @@ export default function RamadhanRing() {
     return () => clearInterval(stockInterval);
   }, []);
 
+  // CAPI ViewContent Effect
+  useEffect(() => {
+    const trackViewContent = async () => {
+      try {
+        const { fbc, fbp } = getFbcFbpCookies();
+        const clientIp = await getClientIp();
+        
+        await supabase.functions.invoke('capi-universal', {
+          body: {
+            pixelId: 'CAPI_JEWELRY',
+            eventName: 'ViewContent',
+            eventSourceUrl: window.location.href,
+            customData: {
+              content_name: 'Jewelry Export Ring Ramadhan',
+              value: priceID,
+              currency: 'IDR'
+            },
+            userData: {
+              fbc,
+              fbp,
+              client_ip_address: clientIp
+            }
+          }
+        });
+      } catch (e) {
+        console.error('ViewContent CAPI error', e);
+      }
+    };
+    
+    trackViewContent();
+  }, []);
+
   const toggleLang = () => {
     setLang(lang === 'id' ? 'en' : 'id');
     setPaymentMethod(''); // Reset payment method on lang change
@@ -169,6 +201,32 @@ export default function RamadhanRing() {
     try {
       const backendPaymentMethod = lang === 'en' ? 'PAYPAL' : (paymentMethod === 'bca_manual' ? 'BCA_MANUAL' : 'QRIS');
 
+      // Track AddPaymentInfo
+      try {
+        await supabase.functions.invoke('capi-universal', {
+          body: {
+            pixelId: 'CAPI_JEWELRY',
+            eventName: 'AddPaymentInfo',
+            eventSourceUrl: window.location.href,
+            customData: {
+              content_name: `Jewelry Export Ring Ramadhan - ${productDesc} (x${qty})`,
+              value: lang === 'id' ? totalIDR : totalEN,
+              currency: lang === 'id' ? 'IDR' : 'SGD'
+            },
+            userData: {
+              fbc,
+              fbp,
+              client_ip_address: clientIp,
+              fn: userName,
+              ph: phoneNumber,
+              em: userEmail || `customer_${phoneNumber}@guest.com`
+            }
+          }
+        });
+      } catch (e) {
+        console.error('AddPaymentInfo CAPI error', e);
+      }
+
       const payload = {
         subscriptionType: 'universal', // ⚠️ WAJIB TETAP 'universal'
         paymentMethod: backendPaymentMethod,
@@ -183,7 +241,7 @@ export default function RamadhanRing() {
         amount: lang === 'id' ? totalIDR : totalEN,
         currency: lang === 'id' ? 'IDR' : 'SGD',
         quantity: 1, // Send as 1 because amount is already total
-        productName: `Export Ring Ramadhan - ${productDesc} (x${qty})`,
+        productName: `Jewelry Export Ring Ramadhan - ${productDesc} (x${qty})`,
         affiliateRef,
         fbc,
         fbp,
