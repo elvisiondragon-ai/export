@@ -34,6 +34,7 @@ export default function RamadhanRing() {
   const [searchParams] = useSearchParams();
   const affiliateRef = searchParams.get('id');
   const { lang, setLang } = useLocale();
+  const PIXEL_ID = '874165095242407';
 
   const [ringType, setRingType] = useState<'single' | 'couple'>('single');
   const [qty, setQty] = useState(1);
@@ -71,6 +72,40 @@ export default function RamadhanRing() {
   const priceEN = ringType === 'single' ? 45 : 80;
   const wasPriceID = ringType === 'single' ? 2000000 : 3500000;
   const wasPriceEN = ringType === 'single' ? 175 : 300;
+
+  // Helper to send CAPI events
+  const sendCapiEvent = async (eventName: string, eventData: any, eventId?: string) => {    
+    try {
+      const { fbc, fbp } = getFbcFbpCookies();
+
+      const userData: any = {
+        client_user_agent: navigator.userAgent,
+        fbc,
+        fbp
+      };
+
+      if (userEmail) userData.em = userEmail;
+      if (userName) {
+          const nameParts = userName.trim().split(/\s+/);
+          userData.fn = nameParts[0];
+          if (nameParts.length > 1) userData.ln = nameParts.slice(1).join(' ');
+      }
+      if (phoneNumber) userData.ph = phoneNumber;
+
+      await supabase.functions.invoke('capi-universal', {
+        body: {
+          pixelId: PIXEL_ID,
+          eventName,
+          customData: eventData,
+          eventId: eventId,
+          eventSourceUrl: window.location.href,
+          userData
+        }
+      });
+    } catch (err) {
+      console.error('CAPI Error:', err);
+    }
+  };
 
   // Timer Effect
   useEffect(() => {
@@ -116,10 +151,17 @@ export default function RamadhanRing() {
     // Track ViewContent
     fbq('track', 'ViewContent', {
       content_name: 'Jewelry Export Ring Ramadhan',
-      value: priceID,
-      currency: 'IDR'
+      value: lang === 'id' ? priceID : priceEN,
+      currency: lang === 'id' ? 'IDR' : 'SGD'
     });
-  }, []);
+
+    // Also track ViewContent via CAPI
+    sendCapiEvent('ViewContent', {
+      content_name: 'Jewelry Export Ring Ramadhan',
+      value: lang === 'id' ? priceID : priceEN,
+      currency: lang === 'id' ? 'IDR' : 'SGD'
+    });
+  }, [lang]);
 
   const toggleLang = () => {
     setLang(lang === 'id' ? 'en' : 'id');
@@ -185,6 +227,9 @@ export default function RamadhanRing() {
     if (lang === 'en' && paymentMethod === 'cod') {
       const msg = `🛒 *NEW ORDER – Export Ring Ramadhan Gift*\n\n👤 Name: ${userName}\n📱 Phone: ${phoneNumber}\n🏠 Address: ${fullAddressEN}\n💍 Product: ${productDesc}\n📦 Qty: ${qty}\n💳 Pay: COD\n💰 Total: SGD ${totalEN}\n\nPlease confirm my order!`;
       sendWAAlert('success', { ref: 'WA-ORDER-COD', name: userName, phone: phoneNumber, amount: `SGD ${totalEN}` });
+      
+      // PURCHASE CAPI HANDLE BY BACKEND
+
       window.open(`https://wa.me/62895325633487?text=${encodeURIComponent(msg)}`, '_blank');
       return;
     }
@@ -251,6 +296,9 @@ export default function RamadhanRing() {
       if (data?.success) {
         if (lang === 'en' && paymentMethod === 'paypal' && data.checkoutUrl) {
           sendWAAlert('success', { ref: data.tripay_reference || 'PAYPAL', name: userName, phone: phoneNumber, amount: `SGD ${totalEN}` });
+          
+          // PURCHASE CAPI HANDLE BY BACKEND
+
           window.location.href = data.checkoutUrl;
           return;
         }
@@ -258,6 +306,8 @@ export default function RamadhanRing() {
         setPaymentData(data);
         setShowPaymentInstructions(true);
         sendWAAlert('success', { ref: data.tripay_reference, name: userName, phone: phoneNumber, amount: `Rp ${totalIDR.toLocaleString('id-ID')}` });
+        
+        // PURCHASE CAPI HANDLE BY BACKEND
       } else if (paymentMethod === 'bca_manual') {
         const ref = `MANUAL-${Date.now()}`;
         setPaymentData({ 
@@ -268,6 +318,8 @@ export default function RamadhanRing() {
         });
         setShowPaymentInstructions(true);
         sendWAAlert('success', { ref, name: userName, phone: phoneNumber, amount: `Rp ${totalIDR.toLocaleString('id-ID')}` });
+        
+        // PURCHASE CAPI HANDLE BY BACKEND
       } else {
         alert(data?.error || error?.message || (lang === 'id' ? "Gagal membuat pembayaran, hubungi admin via WhatsApp." : "Failed to create payment, please contact admin."));
       }

@@ -19,7 +19,7 @@ import { WhatsAppButton } from '@/components/WhatsAppButton';
 export default function JewelryPaymentPage() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const PIXEL_ID = 'CAPI_JEWELRY'; // Signals capi-universal to use JEWELRY_PIXEL_ID env
+  const PIXEL_ID = '874165095242407'; // New Pixel ID
   
   const products = [
     {

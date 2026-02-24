@@ -27,6 +27,11 @@ The objective was to fully integrate the new **Research** and **Ramadhan Ring** 
     - Integrated **WA API** alerts for checkout tracking.
     - Added 10 international verified reviews with flags.
     - Integrated FAQ with visual proof: `testpen.jpeg` (Tester) and `certi.jpeg` (Certificate).
+- **CAPI Integration:**
+    - Updated Pixel ID to `874165095242407`.
+    - Implemented `ViewContent` and `AddPaymentInfo` CAPI events.
+    - **Frontend Purchase tracking removed**: Added `// PURCHASE CAPI HANDLE BY BACKEND` reminders.
+    - **InitiateCheckout tracking removed**: Per user directive.
 
 ### C. Research Landing Page (/research)
 - **React Conversion:** Fully localized with the global parameter-aware toggle.
@@ -38,8 +43,8 @@ The objective was to fully integrate the new **Research** and **Ramadhan Ring** 
 - **Hover Prefetching:** Implemented `lazyWithPreload`. Assets begin downloading as soon as a user hovers over a link, making page transitions feel "instant."
 
 ## 3. Technical Integrity
-- **Build Status:** `npm run build` verified successful after resolving asset path issues.
-- **CAPI/Pixel:** Signals `subscriptionType: 'universal'` for generic physical product handling.
+- **Build Status:** `npm run build` verified successful.
+- **CAPI/Pixel:** Correctly signal `subscriptionType: 'universal'` for generic physical product handling in the backend.
 
 ## 4. Problem/Solution Summary
 | Issue | Root Cause | Solution |
