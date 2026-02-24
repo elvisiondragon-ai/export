@@ -93,37 +93,32 @@ export default function RamadhanRing() {
     return () => clearInterval(stockInterval);
   }, []);
 
-  // CAPI ViewContent Effect
+  // Standard FB Pixel (PageView & ViewContent)
   useEffect(() => {
-    const trackViewContent = async () => {
-      try {
-        const { fbc, fbp } = getFbcFbpCookies();
-        const clientIp = await getClientIp();
-        
-        await supabase.functions.invoke('capi-universal', {
-          body: {
-            pixelId: 'CAPI_JEWELRY',
-            eventName: 'ViewContent',
-            eventSourceUrl: window.location.href,
-            testCode: 'TEST54644', // TEST MODE
-            customData: {
-              content_name: 'Jewelry Export Ring Ramadhan',
-              value: priceID,
-              currency: 'IDR'
-            },
-            userData: {
-              fbc,
-              fbp,
-              client_ip_address: clientIp
-            }
-          }
-        });
-      } catch (e) {
-        console.error('ViewContent CAPI error', e);
-      }
-    };
+    // Facebook Pixel Code Initialization
+    !function(f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
+      if (f.fbq) return; n = f.fbq = function() {
+        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+      };
+      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+      n.queue = []; t = b.createElement(e); t.async = !0;
+      t.src = v; s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s)
+    }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
     
-    trackViewContent();
+    // Explicitly casting window.fbq for TS
+    const fbq = (window as any).fbq;
+    
+    // Init pixel and track PageView
+    fbq('init', '874165095242407');
+    fbq('track', 'PageView');
+    
+    // Track ViewContent
+    fbq('track', 'ViewContent', {
+      content_name: 'Jewelry Export Ring Ramadhan',
+      value: priceID,
+      currency: 'IDR'
+    });
   }, []);
 
   const toggleLang = () => {
@@ -206,7 +201,7 @@ export default function RamadhanRing() {
       try {
         await supabase.functions.invoke('capi-universal', {
           body: {
-            pixelId: 'CAPI_JEWELRY',
+            pixelId: '874165095242407', // New Pixel
             eventName: 'AddPaymentInfo',
             eventSourceUrl: window.location.href,
             testCode: 'TEST54644', // TEST MODE
