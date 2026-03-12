@@ -53,7 +53,7 @@ export default function FitFactorPaymentPageID() {
   const PIXEL_ID = '1797660474333865';
 
   const productName = 'FitFactor Herbal';
-  const basePrice = 250000;
+  const basePrice = 200000;
 
   const [quantity, setQuantity] = useState(3);
   const [userName, setUserName] = useState('');
@@ -81,10 +81,10 @@ export default function FitFactorPaymentPageID() {
   ];
 
   const getTieredPrice = (qty: number) => {
-    if (qty === 3) return 450000;
-    if (qty === 6) return 800000;
-    if (qty === 9) return 1200000;
-    return 150000 * qty;
+    if (qty === 3) return 360000;
+    if (qty === 6) return 660000;
+    if (qty === 9) return 900000;
+    return 200000 * qty;
   };
 
   const totalAmount = getTieredPrice(quantity);
@@ -216,11 +216,11 @@ export default function FitFactorPaymentPageID() {
         <div className="bg-slate-900 p-6 md:p-8 rounded-3xl space-y-6 shadow-2xl border border-slate-800">
           <h4 className="font-black text-white text-lg flex items-center gap-3 uppercase tracking-tight"><Sparkles className="h-5 w-5 text-primary" /> Apa yang Anda Dapatkan:</h4>
           <ul className="space-y-4">
-            <li className="flex items-start gap-4"><div className="mt-1 bg-primary/20 p-1.5 rounded-full"><Zap className="h-4 w-4 text-primary" /></div><p className="text-base text-slate-200 font-medium leading-relaxed"><b className="text-white">{quantity} Sachet FitFactor Herbal</b> (Konsumsi max 1x sehari untuk hasil optimal).</p></li>
-            <li className="flex items-start gap-4"><div className="mt-1 bg-primary/20 p-1.5 rounded-full"><BookOpen className="h-4 w-4 text-primary" /></div><p className="text-base text-slate-200 font-medium leading-relaxed"><b className="text-white">Exclusive Weight Loss Guidance Booklet</b> (Panduan diet & nutrisi harian).</p></li>
-            <li className="flex items-start gap-4"><div className="mt-1 bg-primary/20 p-1.5 rounded-full"><Music className="h-4 w-4 text-primary" /></div><p className="text-base text-slate-200 font-medium leading-relaxed"><b className="text-white">Metabolism Sync Hypnosis Audio</b> (Digital Access yang dikirimkan saat barang sampai).</p></li>
+            <li className="flex items-start gap-4"><div className="mt-1 bg-primary/20 p-1.5 rounded-full"><Zap className="h-4 w-4 text-primary" /></div><p className="text-base text-slate-200 font-medium leading-relaxed"><b className="text-white">{quantity} Botol Fit Factor Imun Booster</b> (30 kapsul · konsumsi 2 kapsul per hari)</p></li>
+            <li className="flex items-start gap-4"><div className="mt-1 bg-primary/20 p-1.5 rounded-full"><BookOpen className="h-4 w-4 text-primary" /></div><p className="text-base text-slate-200 font-medium leading-relaxed"><b className="text-white">Panduan Konsumsi & Jadwal Minum</b> (digital, dikirim via WhatsApp setelah order)</p></li>
+            <li className="flex items-start gap-4"><div className="mt-1 bg-primary/20 p-1.5 rounded-full"><Music className="h-4 w-4 text-primary" /></div><p className="text-base text-slate-200 font-medium leading-relaxed"><b className="text-white">Tips Gaya Hidup Sehat Pendukung Imunitas</b> (pola makan, tidur, dan aktivitas harian)</p></li>
           </ul>
-          <div className="pt-6 space-y-2 border-t border-slate-800"><p className="text-sm font-black text-primary flex items-center gap-2 uppercase tracking-tighter"><Zap className="h-4 w-4" /> High Technology Synchronization</p><p className="text-xs leading-relaxed text-slate-400 font-medium italic">"Minum FitFactor sambil mendengarkan audio hypnosis metabolism sync akan membantu tubuh masuk ke fase deep relaxation, memastikan metabolisme bekerja lebih cepat membakar lemak secara optimal."</p></div>
+          <div className="pt-6 space-y-2 border-t border-slate-800"><p className="text-sm font-black text-primary flex items-center gap-2 uppercase tracking-tighter"><Zap className="h-4 w-4" /> MENGAPA FORMULA INI BERBEDA:</p><p className="text-xs leading-relaxed text-slate-400 font-medium italic">"Fit Factor menggabungkan 5 tanaman herbal unggulan yang telah digunakan dalam pengobatan tradisional Indonesia selama ratusan tahun — kini diformulasikan dengan standar produksi modern dan telah mendapat sertifikasi BPOM, sehingga manfaatnya terjamin konsisten di setiap kapsul."</p></div>
         </div>
 
         <Card><CardHeader><CardTitle>Informasi Pengiriman</CardTitle></CardHeader><CardContent className="space-y-4">
