@@ -108,8 +108,8 @@ export default function FitFactorPaymentPageID() {
     sendCapiEvent('AddToCart', { content_name: productName, value: totalAmount, currency: 'IDR' }, `addtocart-${Date.now()}`);
   }, []);
 
-  const handleIncrement = () => setQuantity(prev => prev + 3);
-  const handleDecrement = () => setQuantity(prev => Math.max(3, prev - 3));
+  const handleIncrement = () => setQuantity(prev => prev + 1);
+  const handleDecrement = () => setQuantity(prev => Math.max(1, prev - 1));
 
   const formatCurrency = (amount: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
   const copyToClipboard = (text: string) => { navigator.clipboard.writeText(text); toast({ title: "Berhasil Disalin" }); };
@@ -126,26 +126,6 @@ export default function FitFactorPaymentPageID() {
     const clientIp = await getClientIp();
 
     try {
-      if (selectedPaymentMethod === 'COD') {
-        const waMessage = `Halo Kak, saya mau pesan ${productName} (x${quantity}) dengan metode COD.\n\n` +
-          `*Data Pesanan:*\n` +
-          `- Nama: ${userName}\n` +
-          `- WA: ${phoneNumber}\n` +
-          `- Produk: ${productName} (x${quantity})\n` +
-          `- Total: ${formatCurrency(totalAmount)}\n\n` +
-          `*Alamat Lengkap (Mohon Diisi):*\n` +
-          `- Provinsi: ${selectedProvince}\n` +
-          `- Kota: ${kota}\n` +
-          `- Kecamatan: ${kecamatan}\n` +
-          `- Alamat: ${userAddress}\n` +
-          `- Kode Pos: ${kodePos}`;
-
-        const waUrl = `https://wa.me/62895325633487?text=${encodeURIComponent(waMessage)}`;
-        window.open(waUrl, '_blank');
-        setLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke('tripay-create-payment', {
         body: {
           subscriptionType: 'fitfactor', paymentMethod: selectedPaymentMethod, userName, userEmail, phoneNumber,
@@ -154,7 +134,15 @@ export default function FitFactorPaymentPageID() {
         }
       });
       if (data?.success) { setPaymentData(data); setShowPaymentInstructions(true); }
-      else if (selectedPaymentMethod === 'BCA_MANUAL') { setPaymentData({ paymentMethod: 'BCA_MANUAL', amount: totalAmount, status: 'UNPAID', tripay_reference: `MANUAL-${Date.now()}` }); setShowPaymentInstructions(true); }
+      else if (selectedPaymentMethod === 'BCA_MANUAL' || selectedPaymentMethod === 'COD') { 
+        setPaymentData({ 
+          paymentMethod: selectedPaymentMethod, 
+          amount: totalAmount, 
+          status: 'UNPAID', 
+          tripay_reference: `${selectedPaymentMethod === 'COD' ? 'COD' : 'MANUAL'}-${Date.now()}` 
+        }); 
+        setShowPaymentInstructions(true); 
+      }
       else { toast({ title: "Error", description: data?.error || error?.message || "Gagal", variant: "destructive" }); }
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
@@ -174,6 +162,13 @@ export default function FitFactorPaymentPageID() {
               <div className="flex items-center justify-between bg-secondary p-3 rounded-md"><span className="font-mono text-lg font-bold">7751146578</span><Button variant="ghost" size="icon" onClick={() => copyToClipboard('7751146578')}><Copy className="w-5 h-5" /></Button></div>
               <p className="font-bold text-center">Delia Mutia</p><div className="flex justify-center"><img src={qrisBcaImage} alt="QRIS BCA" className="w-64 h-64 border rounded-lg" /></div>
               <a href={`https://wa.me/62895325633487?text=${encodeURIComponent(`Halo kak, saya sudah bayar FitFactor. Ref: ${paymentData.tripay_reference}`)}`} target="_blank" rel="noopener noreferrer" className="w-full"><Button className="w-full bg-green-500 hover:bg-green-600 text-white" size="lg"><FaWhatsapp className="mr-2" /> Konfirmasi CS</Button></a>
+            </CardContent></Card>
+          )}
+          {paymentData.paymentMethod === 'COD' && (
+            <Card><CardHeader><CardTitle>Pesanan COD Berhasil</CardTitle></CardHeader><CardContent className="space-y-4">
+              <p className="text-center font-bold">Pesanan Anda telah kami terima dan akan segera diproses.</p>
+              <p className="text-center text-sm text-muted-foreground">Tim kami akan menghubungi Anda melalui WhatsApp untuk konfirmasi pengiriman. Pembayaran dilakukan saat barang sampai di rumah Anda.</p>
+              <a href={`https://wa.me/62895325633487?text=${encodeURIComponent(`Halo Kak, saya sudah order FitFactor (x${quantity}) metode COD. Ref: ${paymentData.tripay_reference}`)}`} target="_blank" rel="noopener noreferrer" className="w-full"><Button className="w-full bg-green-500 hover:bg-green-600 text-white" size="lg"><FaWhatsapp className="mr-2" /> Hubungi CS</Button></a>
             </CardContent></Card>
           )}
           {paymentData.payCode && (<Card><CardContent className="pt-6"><div className="flex items-center justify-between bg-secondary p-3 rounded-md"><span className="font-mono text-xl font-bold text-primary">{paymentData.payCode}</span><Button variant="ghost" size="icon" onClick={() => copyToClipboard(paymentData.payCode)}><Copy className="w-5 h-5" /></Button></div></CardContent></Card>)}
@@ -198,12 +193,12 @@ export default function FitFactorPaymentPageID() {
       <div className="px-6 space-y-6">
         <Card><CardHeader><CardTitle>Rangkuman Pesanan</CardTitle></CardHeader><CardContent className="space-y-4">
           <div className="flex justify-center my-4"><img src={fitfactorImage} alt="FitFactor" className="w-48 h-48 object-contain" /></div>
-          <Separator /><div className="flex justify-between items-center"><Label htmlFor="quantity" className="text-muted-foreground">Kuantitas (Min. 3 Box)</Label><div className="flex items-center gap-2">
+          <Separator /><div className="flex justify-between items-center"><Label htmlFor="quantity" className="text-muted-foreground">Kuantitas</Label><div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={handleDecrement}><Minus className="h-4 w-4" /></Button>
             <span className="font-bold text-lg w-10 text-center">{quantity}</span>
             <Button variant="outline" size="icon" onClick={handleIncrement}><Plus className="h-4 w-4" /></Button>
           </div></div>
-          <div className="text-sm font-medium text-blue-600 text-center bg-blue-50 p-2 rounded-md">{quantity < 3 ? "Beli minimal 3 untuk Diskon & FREE Ongkir" : `✨ Bundle ${quantity} Box Berhasil: Diskon & FREE Ongkir aktif!`}</div>
+          <div className="text-sm font-medium text-blue-600 text-center bg-blue-50 p-2 rounded-md">{quantity < 3 ? "Beli 3 Box atau lebih untuk Harga Lebih Hemat!" : `✨ Bundle ${quantity} Box Berhasil: Diskon & FREE Ongkir aktif!`}</div>
           <Separator /><div className="flex justify-between items-center"><Label className="text-muted-foreground">Subtotal</Label><span className={isAnyDiscountApplied ? "line-through opacity-50" : "font-medium"}>{formatCurrency(originalTotalAmount)}</span></div>
           {isAnyDiscountApplied && <div className="flex justify-between items-center text-green-600 font-bold"><Label className="text-green-600">Diskon</Label><span>-{formatCurrency(discountAmount)}</span></div>}
           <div className="flex justify-between items-center"><Label className="text-muted-foreground">Ongkos Kirim</Label><span className="text-green-600 font-bold">FREE</span></div>
